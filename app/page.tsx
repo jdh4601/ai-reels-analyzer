@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
-import type { Reel } from "@/lib/schemas";
+import { useEffect, useState, type FormEvent } from "react";
+import type { Reel, AccountSnapshot } from "@/lib/schemas";
 import type { AnalyzeResult } from "@/lib/analysis/analyze";
 import { ReelPicker } from "@/components/ReelPicker";
+import { FollowerGrowthChart } from "@/components/FollowerGrowthChart";
 import { BottleneckBanner } from "@/components/BottleneckBanner";
 import { DiagnosisCards } from "@/components/DiagnosisCards";
 import { MetricBars } from "@/components/MetricBars";
@@ -14,12 +15,37 @@ export default function Page() {
   const [reels, setReels] = useState<Reel[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeResult | null>(null);
+  const [snapshots, setSnapshots] = useState<AccountSnapshot[]>([]);
+  const [snapDate, setSnapDate] = useState("");
+  const [snapFollowers, setSnapFollowers] = useState("");
 
   useEffect(() => {
     fetch("/api/reels")
       .then((r) => r.json())
       .then((d) => setReels(d.reels));
+    fetch("/api/snapshots")
+      .then((r) => r.json())
+      .then((d) => setSnapshots(d.snapshots));
   }, []);
+
+  async function addSnapshot(e: FormEvent) {
+    e.preventDefault();
+    if (!snapDate || !snapFollowers) return;
+    const res = await fetch("/api/snapshots", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        date: snapDate,
+        followerCount: Number(snapFollowers),
+        reachLast7d: 0,
+      }),
+    });
+    if (!res.ok) return;
+    const refreshed = await fetch("/api/snapshots").then((r) => r.json());
+    setSnapshots(refreshed.snapshots);
+    setSnapDate("");
+    setSnapFollowers("");
+  }
 
   useEffect(() => {
     if (!selectedId) return;
@@ -45,6 +71,26 @@ export default function Page() {
           </a>
         </div>
       </div>
+
+      <FollowerGrowthChart snapshots={snapshots} />
+      <form onSubmit={addSnapshot} className="flex gap-2 items-center text-sm">
+        <input
+          type="date"
+          className="border rounded px-2 py-1"
+          value={snapDate}
+          onChange={(e) => setSnapDate(e.target.value)}
+        />
+        <input
+          type="number"
+          placeholder="팔로워 수"
+          className="border rounded px-2 py-1 w-32"
+          value={snapFollowers}
+          onChange={(e) => setSnapFollowers(e.target.value)}
+        />
+        <button type="submit" className="border rounded px-3 py-1 bg-neutral-100 hover:bg-neutral-200">
+          스냅샷 추가
+        </button>
+      </form>
 
       {analysis && selected && (
         <>
