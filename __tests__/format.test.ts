@@ -1,9 +1,9 @@
 import { bandColor, fmtPct, fmtDelta } from "@/lib/ui/format";
 
-test("밴드별 색 클래스", () => {
-  expect(bandColor("weak")).toContain("red");
-  expect(bandColor("ok")).toContain("amber");
-  expect(bandColor("strong")).toContain("green");
+test("밴드별 색 클래스 (토큰 기반)", () => {
+  expect(bandColor("weak")).toContain("band-weak");
+  expect(bandColor("ok")).toContain("band-ok");
+  expect(bandColor("strong")).toContain("band-strong");
 });
 
 test("퍼센트 포맷", () => {

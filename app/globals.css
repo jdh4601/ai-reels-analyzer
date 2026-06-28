@@ -1,1 +1,38 @@
 @import "tailwindcss";
+
+/* ── 디자인 토큰 (Redesign v2) ──────────────────────────────
+   Tailwind v4 @theme: 여기 정의한 --color-* 등이 곧 유틸리티 클래스가 된다.
+   예) --color-brand-600 → bg-brand-600 / text-brand-600 / border-brand-600 */
+@theme {
+  /* 브랜드 (인디고-바이올렛 액센트) */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+
+  /* 표면 / 경계 */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-border-subtle: #e9edf3;
+
+  /* 진단 밴드: 본문색 / 부드러운 배경 / 경계 */
+  --color-band-weak: #dc2626;
+  --color-band-weak-soft: #fef2f2;
+  --color-band-weak-border: #fecaca;
+
+  --color-band-ok: #d97706;
+  --color-band-ok-soft: #fffbeb;
+  --color-band-ok-border: #fde68a;
+
+  --color-band-strong: #16a34a;
+  --color-band-strong-soft: #f0fdf4;
+  --color-band-strong-border: #bbf7d0;
+
+  /* 라운드 / 그림자 */
+  --radius-card: 0.875rem;
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-card-hover: 0 4px 12px rgb(16 24 40 / 0.08);
+}

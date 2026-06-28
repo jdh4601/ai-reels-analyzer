@@ -1,9 +1,14 @@
 import type { Band } from "@/lib/analysis/diagnosis";
 
+// 진단 밴드 → 디자인 토큰 클래스 (globals.css @theme 정의)
+const BAND_CLASSES: Record<Band, string> = {
+  weak: "text-band-weak bg-band-weak-soft border-band-weak-border",
+  ok: "text-band-ok bg-band-ok-soft border-band-ok-border",
+  strong: "text-band-strong bg-band-strong-soft border-band-strong-border",
+};
+
 export function bandColor(band: Band): string {
-  if (band === "weak") return "text-red-600 bg-red-50 border-red-200";
-  if (band === "strong") return "text-green-600 bg-green-50 border-green-200";
-  return "text-amber-600 bg-amber-50 border-amber-200";
+  return BAND_CLASSES[band];
 }
 
 export function fmtPct(n: number): string {

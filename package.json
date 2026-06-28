@@ -27,6 +27,7 @@
   "homepage": "https://github.com/jdh4601/ai-reels-analyzer#readme",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.106.0",
+    "lucide-react": "^1.22.0",
     "next": "^15.5.19",
     "openai": "^6.45.0",
     "react": "^19.2.7",
