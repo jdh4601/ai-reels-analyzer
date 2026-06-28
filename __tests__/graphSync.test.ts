@@ -1,0 +1,58 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { syncFromGraph } from "@/lib/graph/sync";
+import { createJsonReelRepository } from "@/lib/store/reelRepository";
+import { createJsonAccountRepository } from "@/lib/store/accountRepository";
+import type { GraphClient } from "@/lib/graph/client";
+import type { Reel } from "@/lib/schemas";
+
+function tmpDir() {
+  return mkdtempSync(join(tmpdir(), "sync-"));
+}
+
+const fakeClient: GraphClient = {
+  getProfile: async () => ({ userId: "1", username: "founder", followersCount: 1500 }),
+  listReels: async () => [
+    { id: "media-1", media_product_type: "REELS", caption: "API 캡션", timestamp: "2026-06-01T00:00:00+0000" },
+  ],
+  getInsights: async () => ({ views: 12000, reach: 9000, likes: 400, comments: 8, saved: 50, shares: 200, ig_reels_avg_watch_time: 21000 }),
+};
+
+test("동기화는 집계 수치를 갱신하고 스샷 데이터(훅·길이·자막)는 보존한다", async () => {
+  const reelRepo = createJsonReelRepository(tmpDir());
+  const accountRepo = createJsonAccountRepository(tmpDir());
+
+  // 스크린샷으로 이미 넣어둔 기존 릴스
+  const existing: Reel = {
+    id: "media-1", postedAt: "2026-06-01T00:00:00Z", durationSec: 53,
+    views: 100, reach: 90, likes: 1, comments: 0, saves: 0, shares: 0, avgWatchTimeSec: 5,
+    hookRetention3s: 42,
+    retentionCurve: [{ sec: 0, pct: 100 }, { sec: 3, pct: 42 }],
+    transcript: [{ startSec: 0, endSec: 3, text: "도입" }],
+  };
+  await reelRepo.upsert(existing);
+
+  const result = await syncFromGraph(fakeClient, reelRepo, accountRepo, "2026-06-29");
+
+  const updated = await reelRepo.get("media-1");
+  expect(updated?.views).toBe(12000); // API로 갱신
+  expect(updated?.avgWatchTimeSec).toBeCloseTo(21, 5);
+  expect(updated?.durationSec).toBe(53); // 스샷 길이 보존
+  expect(updated?.hookRetention3s).toBe(42); // 스샷 훅 보존
+  expect(updated?.transcript?.[0].text).toBe("도입"); // 자막 보존
+  expect(updated?.derived?.shareRate).toBeCloseTo(200 / 12000 * 100, 5);
+
+  expect(result.syncedReels).toBe(1);
+  const snaps = await accountRepo.list();
+  expect(snaps[0]).toMatchObject({ date: "2026-06-29", followerCount: 1500 });
+});
+
+test("신규 릴스는 길이 0(미상)으로 생성된다", async () => {
+  const reelRepo = createJsonReelRepository(tmpDir());
+  const accountRepo = createJsonAccountRepository(tmpDir());
+  await syncFromGraph(fakeClient, reelRepo, accountRepo, "2026-06-29");
+  const created = await reelRepo.get("media-1");
+  expect(created?.durationSec).toBe(0);
+  expect(created?.views).toBe(12000);
+});

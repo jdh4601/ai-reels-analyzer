@@ -19,6 +19,7 @@ interface MaskedProvider {
 interface MaskedSettings {
   activeProvider: ProviderId;
   providers: Record<ProviderId, MaskedProvider>;
+  instagram: { configured: boolean; maskedKey: string | null };
 }
 
 export default function SettingsPage() {
@@ -26,6 +27,7 @@ export default function SettingsPage() {
   const [active, setActive] = useState<ProviderId>("anthropic");
   const [keyInputs, setKeyInputs] = useState<Record<string, string>>({});
   const [modelInputs, setModelInputs] = useState<Record<string, string>>({});
+  const [igToken, setIgToken] = useState("");
   const [status, setStatus] = useState("");
 
   function load(d: MaskedSettings) {
@@ -52,7 +54,7 @@ export default function SettingsPage() {
     const res = await fetch("/api/settings", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ activeProvider: active, providers }),
+      body: JSON.stringify({ activeProvider: active, providers, instagram: { accessToken: igToken } }),
     });
     if (!res.ok) {
       setStatus("저장 실패");
@@ -60,6 +62,7 @@ export default function SettingsPage() {
     }
     load(await res.json());
     setKeyInputs({});
+    setIgToken("");
     setStatus("저장됨 ✓");
   }
 
@@ -110,6 +113,28 @@ export default function SettingsPage() {
             </div>
           );
         })}
+
+        <div className="rounded-lg border border-pink-200 bg-pink-50/40 p-4 space-y-2">
+          <h2 className="font-semibold">📷 Instagram 연동 (Phase 2 자동 수집)</h2>
+          <p className="text-xs text-neutral-500">
+            Meta 개발자 앱에서 발급한 Instagram 액세스 토큰을 붙여넣으세요. 대시보드의
+            "Instagram 동기화"로 릴스 집계 지표·팔로워 수가 자동 갱신됩니다.
+            {data.instagram.configured && (
+              <span className="text-green-600"> · 현재 등록됨({data.instagram.maskedKey})</span>
+            )}
+          </p>
+          <input
+            type="password"
+            className="border rounded px-2 py-1 w-full text-sm"
+            placeholder={
+              data.instagram.configured
+                ? `등록됨 (${data.instagram.maskedKey}) — 변경 시에만 입력`
+                : "Instagram 액세스 토큰 붙여넣기"
+            }
+            value={igToken}
+            onChange={(e) => setIgToken(e.target.value)}
+          />
+        </div>
 
         <div className="flex items-center gap-3">
           <button type="submit" className="border rounded px-4 py-2 bg-neutral-900 text-white hover:bg-neutral-700">

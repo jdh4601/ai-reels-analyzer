@@ -19,6 +19,24 @@ export default function Page() {
   const [snapshots, setSnapshots] = useState<AccountSnapshot[]>([]);
   const [snapDate, setSnapDate] = useState("");
   const [snapFollowers, setSnapFollowers] = useState("");
+  const [syncStatus, setSyncStatus] = useState("");
+
+  async function onSync() {
+    setSyncStatus("동기화 중…");
+    const res = await fetch("/api/sync", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) {
+      setSyncStatus("실패: " + (data.error ?? "오류"));
+      return;
+    }
+    const [reelsRes, snapsRes] = await Promise.all([
+      fetch("/api/reels").then((r) => r.json()),
+      fetch("/api/snapshots").then((r) => r.json()),
+    ]);
+    setReels(reelsRes.reels);
+    setSnapshots(snapsRes.snapshots);
+    setSyncStatus(`동기화 완료: 릴스 ${data.syncedReels}개 · 팔로워 ${data.followerCount}`);
+  }
 
   useEffect(() => {
     fetch("/api/reels")
@@ -73,8 +91,15 @@ export default function Page() {
           <a href="/settings" className="text-sm text-blue-600 underline">
             ⚙️ 설정
           </a>
+          <button
+            onClick={onSync}
+            className="text-sm border rounded px-2 py-1 bg-pink-600 text-white hover:bg-pink-700"
+          >
+            📥 Instagram 동기화
+          </button>
         </div>
       </div>
+      {syncStatus && <p className="text-sm text-neutral-600">{syncStatus}</p>}
 
       <FollowerGrowthChart snapshots={snapshots} />
       <form onSubmit={addSnapshot} className="flex gap-2 items-center text-sm">

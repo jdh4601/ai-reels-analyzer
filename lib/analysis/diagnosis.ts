@@ -30,7 +30,8 @@ function metricValues(reel: Reel): Partial<Record<MetricKey, number>> {
   const d = computeDerivedRates(reel);
   return {
     hookRetention3s: reel.hookRetention3s,
-    completionRate: d.completionRate,
+    // 영상 길이를 모르면(0) 완료율은 계산 불가 → verdict에서 제외
+    completionRate: reel.durationSec > 0 ? d.completionRate : undefined,
     shareRate: d.shareRate,
     saveRate: d.saveRate,
     likeRate: d.likeRate,

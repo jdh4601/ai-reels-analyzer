@@ -17,9 +17,12 @@ const ProvidersSchema = z.object({
   gemini: ProviderConfigSchema,
 });
 
+const InstagramSchema = z.object({ accessToken: z.string().optional() });
+
 export const SettingsSchema = z.object({
   activeProvider: z.enum(["anthropic", "openai", "kimi", "gemini"]),
   providers: ProvidersSchema,
+  instagram: InstagramSchema.optional(),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 
@@ -34,6 +37,7 @@ export const SettingsInputSchema = z.object({
       gemini: ProviderConfigSchema.optional(),
     })
     .optional(),
+  instagram: InstagramSchema.optional(),
 });
 export type SettingsInput = z.infer<typeof SettingsInputSchema>;
 
@@ -45,6 +49,7 @@ export interface MaskedProvider {
 export interface MaskedSettings {
   activeProvider: ProviderId;
   providers: Record<ProviderId, MaskedProvider>;
+  instagram: { configured: boolean; maskedKey: string | null };
 }
 
 function defaultSettings(): Settings {
@@ -80,7 +85,12 @@ export function createSettingsStore(dataDir: string): SettingsStore {
     const next: Settings = {
       activeProvider: incoming.activeProvider ?? cur.activeProvider,
       providers: { ...cur.providers },
+      instagram: { ...cur.instagram },
     };
+    if (incoming.instagram) {
+      const incToken = incoming.instagram.accessToken?.trim();
+      next.instagram = { accessToken: incToken ? incToken : cur.instagram?.accessToken };
+    }
     for (const id of PROVIDER_IDS) {
       const inc = incoming.providers?.[id];
       if (!inc) continue;
@@ -106,7 +116,15 @@ export function createSettingsStore(dataDir: string): SettingsStore {
         model: c.model ?? PROVIDER_PRESETS[id].defaultModel,
       };
     }
-    return { activeProvider: s.activeProvider, providers };
+    const igToken = s.instagram?.accessToken;
+    return {
+      activeProvider: s.activeProvider,
+      providers,
+      instagram: {
+        configured: Boolean(igToken),
+        maskedKey: igToken ? maskApiKey(igToken) : null,
+      },
+    };
   }
 
   return { get, save, masked };

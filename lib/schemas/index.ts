@@ -36,7 +36,7 @@ export type DerivedRates = z.infer<typeof DerivedRatesSchema>;
 export const ReelSchema = z.object({
   id: z.string().min(1),
   postedAt: z.string(),
-  durationSec: z.number().positive(),
+  durationSec: z.number().nonnegative(), // 0 = 길이 미상(Graph API 신규 릴스). 스샷/수동으로 보완.
   views: z.number().nonnegative(),
   reach: z.number().nonnegative(),
   likes: z.number().nonnegative(),

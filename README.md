@@ -90,7 +90,8 @@ npm run dev
 | POST | `/api/recommend` | 릴스 ID → 진단 + 급락 + 룰 기반 처방 |
 | POST | `/api/generate` | 릴스 ID → LLM 맞춤 생성(훅/엔딩/구간/코멘트) |
 | GET / POST | `/api/snapshots` | 팔로워 스냅샷 조회 / 추가 |
-| GET / POST | `/api/settings` | LLM 제공자 설정 조회(마스킹) / 저장 |
+| GET / POST | `/api/settings` | LLM 제공자 + Instagram 토큰 설정 조회(마스킹) / 저장 |
+| POST | `/api/sync` | Instagram Graph API에서 릴스·팔로워 자동 수집(병합) |
 
 ## 개발
 
@@ -115,13 +116,14 @@ lib/
   analysis/     # 지표·진단·급락 탐지·베이스라인·팔로워 추이 (순수함수)
   recommend/    # 룰 기반 처방 플레이북
   store/        # JSON 파일 리포지토리
-  llm/          # 제공자 추상화 (Anthropic/OpenAI호환 어댑터, 비전 모델 팩토리)
-  settings/     # LLM 키·모델 설정 저장소(마스킹)
+  llm/          # 제공자 추상화 (Anthropic/OpenAI호환 어댑터, 비전/텍스트 모델 팩토리)
+  graph/        # Instagram Graph API 클라이언트·매퍼·동기화
+  settings/     # LLM 키·Instagram 토큰 설정 저장소(마스킹)
 docs/superpowers/  # 설계 문서 + 구현 계획
 ```
 
 ## 로드맵
 
 - **Phase 1 (완료)** — 스크린샷 + SRT 기반 진단·해결책·시각화
+- **Phase 2 (완료)** — Instagram Graph API 연동(릴스 집계 지표·팔로워 수 자동 수집, 스샷 데이터 보존 병합)
 - **Phase 3 (완료)** — LLM 맞춤 생성(훅/엔딩 3안, 구간별 처방, 콘텐츠 코멘트) — 제공자 선택 가능
-- **Phase 2 (예정)** — Instagram Graph API 연동(집계 지표·팔로워/도달 추이 자동 수집)
