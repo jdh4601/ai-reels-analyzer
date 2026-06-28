@@ -10,6 +10,7 @@ import { MetricBars } from "@/components/MetricBars";
 import { RetentionChart } from "@/components/RetentionChart";
 import { GrowthTrend } from "@/components/GrowthTrend";
 import { SolutionsPanel } from "@/components/SolutionsPanel";
+import { AiGenerationPanel } from "@/components/AiGenerationPanel";
 
 export default function Page() {
   const [reels, setReels] = useState<Reel[]>([]);
@@ -111,6 +112,7 @@ export default function Page() {
           <RetentionChart curve={selected.retentionCurve ?? []} drops={analysis.drops} />
           <GrowthTrend reels={reels} />
           <SolutionsPanel prescriptions={analysis.prescriptions} />
+          <AiGenerationPanel reelId={selected.id} />
         </>
       )}
       {!selected && <p className="text-neutral-500">릴스를 선택하면 분석이 표시됩니다.</p>}

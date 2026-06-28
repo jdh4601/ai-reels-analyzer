@@ -20,7 +20,8 @@
 | 💡 해결책 | 약점→처방 룰 플레이북(콜드 오픈·공유 유발·엔딩 CTA 등) |
 | 📈 성장 추이 | 릴스별 3초 훅 시계열 + 개인화 베이스라인(릴스 5개 이상 시 계정 롤링 중앙값으로 전환) |
 | 👥 팔로워 그래프 | 날짜별 팔로워 수 추이 + 직전 대비 증감 배지 |
-| 📷 스샷 파싱 | EDIT 인사이트 스크린샷을 Claude Vision으로 파싱(3초 훅·잔존 곡선·유입 소스) |
+| 📷 스샷 파싱 | EDIT 인사이트 스크린샷을 Vision으로 파싱(3초 훅·잔존 곡선·유입 소스) |
+| ✨ AI 맞춤 생성 | 진단·급락·자막 기반으로 훅 3안·엔딩 3안·구간별 처방·콘텐츠 코멘트를 LLM이 생성 |
 
 ## 기술 스택
 
@@ -86,7 +87,8 @@ npm run dev
 |---|---|---|
 | GET / POST | `/api/reels` | 릴스 목록 조회 / 등록(파생 지표 자동 계산) |
 | POST | `/api/parse-screenshot` | 스크린샷(base64) → Vision 파싱 결과 |
-| POST | `/api/recommend` | 릴스 ID → 진단 + 급락 + 처방 |
+| POST | `/api/recommend` | 릴스 ID → 진단 + 급락 + 룰 기반 처방 |
+| POST | `/api/generate` | 릴스 ID → LLM 맞춤 생성(훅/엔딩/구간/코멘트) |
 | GET / POST | `/api/snapshots` | 팔로워 스냅샷 조회 / 추가 |
 | GET / POST | `/api/settings` | LLM 제공자 설정 조회(마스킹) / 저장 |
 
@@ -120,6 +122,6 @@ docs/superpowers/  # 설계 문서 + 구현 계획
 
 ## 로드맵
 
-- **Phase 1 (완료)** — 스크린샷 + SRT 기반 진단·해결책·시각화 (Anthropic 키만 필요)
-- **Phase 2** — Instagram Graph API 연동(집계 지표·팔로워/도달 추이 자동 수집)
-- **Phase 3** — Claude API 맞춤 생성(훅/엔딩 3안, 구간별 처방, 콘텐츠 코멘트)
+- **Phase 1 (완료)** — 스크린샷 + SRT 기반 진단·해결책·시각화
+- **Phase 3 (완료)** — LLM 맞춤 생성(훅/엔딩 3안, 구간별 처방, 콘텐츠 코멘트) — 제공자 선택 가능
+- **Phase 2 (예정)** — Instagram Graph API 연동(집계 지표·팔로워/도달 추이 자동 수집)
