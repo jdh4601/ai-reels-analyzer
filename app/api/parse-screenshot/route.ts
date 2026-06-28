@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { parseScreenshot, getAnthropicClient } from "@/lib/parsing/screenshot";
+import { parseScreenshot } from "@/lib/parsing/screenshot";
+import { getVisionModel } from "@/lib/llm";
 
 const BodySchema = z.object({
   imageBase64: z.string().min(1),
@@ -14,7 +15,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
   try {
-    const result = await parseScreenshot(parsed.data.imageBase64, parsed.data.mediaType, getAnthropicClient());
+    const model = await getVisionModel();
+    const result = await parseScreenshot(parsed.data.imageBase64, parsed.data.mediaType, model);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "파싱 실패";

@@ -69,6 +69,9 @@ export default function Page() {
           <a href="/upload" className="text-sm text-blue-600 underline">
             📷 업로드
           </a>
+          <a href="/settings" className="text-sm text-blue-600 underline">
+            ⚙️ 설정
+          </a>
         </div>
       </div>
 

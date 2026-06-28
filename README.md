@@ -6,7 +6,9 @@
 
 - **진단은 결정론(룰 기반·테스트 가능), 창의적 생성만 LLM** — 분석 결과가 항상 재현 가능.
 - 비율 분모는 전부 `views`(조회수)로 통일 — EDIT 앱이 보여주던 숫자와 일치.
-- 데이터는 로컬 JSON 파일에 저장(`data/`, gitignore). Anthropic API 키만 있으면 동작.
+- 데이터는 로컬 JSON 파일에 저장(`data/`, gitignore).
+- **LLM 제공자 선택 가능** — Anthropic(Claude) / OpenAI / Kimi(Moonshot) / Gemini 중 골라서 사용.
+  키는 대시보드 설정 화면에서 추가(스크린샷 파싱은 vision 지원 모델 필요).
 
 ## 주요 기능
 
@@ -32,16 +34,7 @@ Next.js 15 (App Router) · TypeScript (strict) · Tailwind CSS · Recharts · Zo
 npm install
 ```
 
-### 2. 환경 변수
-
-`.env.example`을 복사해 `.env.local`을 만들고 Anthropic API 키를 넣는다.
-
-```bash
-cp .env.example .env.local
-# .env.local 안의 ANTHROPIC_API_KEY 를 실제 값으로 교체
-```
-
-### 3. 실행
+### 2. 실행
 
 ```bash
 npm run dev
@@ -50,6 +43,22 @@ npm run dev
 - PC: <http://localhost:3000>
 - 폰(맥과 같은 와이파이): `http://<맥 LAN IP>:3000/upload` — EDIT 스크린샷을 폰에서 바로 업로드
   (개발 서버가 `0.0.0.0`으로 바인딩되어 있어 PC 전송 단계 없이 접속 가능)
+
+### 3. LLM 제공자 설정
+
+대시보드 우측 상단 **⚙️ 설정**(`/settings`)에서 사용할 제공자의 API 키와 모델을 입력하고
+활성 제공자를 선택한다. 키는 이 PC의 `data/settings.json`에만 저장되며(gitignore),
+화면에는 마스킹되어 표시된다.
+
+| 제공자 | 기본 모델 | 연결 |
+|---|---|---|
+| Anthropic (Claude) | `claude-opus-4-8` | 네이티브 |
+| OpenAI | `gpt-4o` | OpenAI 호환 |
+| Kimi (Moonshot) | `moonshot-v1-8k-vision-preview` | OpenAI 호환 |
+| Google Gemini | `gemini-2.0-flash` | OpenAI 호환 |
+
+> 스크린샷 파싱은 **vision 지원 모델**에서만 동작한다. 모델명은 설정 화면에서 편집 가능.
+> (env `ANTHROPIC_API_KEY`는 설정에 키가 없을 때만 쓰이는 폴백.)
 
 ## 사용 방법
 
@@ -79,6 +88,7 @@ npm run dev
 | POST | `/api/parse-screenshot` | 스크린샷(base64) → Vision 파싱 결과 |
 | POST | `/api/recommend` | 릴스 ID → 진단 + 급락 + 처방 |
 | GET / POST | `/api/snapshots` | 팔로워 스냅샷 조회 / 추가 |
+| GET / POST | `/api/settings` | LLM 제공자 설정 조회(마스킹) / 저장 |
 
 ## 개발
 
@@ -103,6 +113,8 @@ lib/
   analysis/     # 지표·진단·급락 탐지·베이스라인·팔로워 추이 (순수함수)
   recommend/    # 룰 기반 처방 플레이북
   store/        # JSON 파일 리포지토리
+  llm/          # 제공자 추상화 (Anthropic/OpenAI호환 어댑터, 비전 모델 팩토리)
+  settings/     # LLM 키·모델 설정 저장소(마스킹)
 docs/superpowers/  # 설계 문서 + 구현 계획
 ```
 
