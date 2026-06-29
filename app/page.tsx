@@ -1,7 +1,12 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
-import type { Reel, AccountSnapshot } from "@/lib/schemas";
+import type { Reel, AccountSnapshot, AccountProfile } from "@/lib/schemas";
 import type { AnalyzeResult } from "@/lib/analysis/analyze";
+import { buildAccountOverview } from "@/lib/analysis/accountOverview";
+import { latestFollowerDelta } from "@/lib/analysis/followerTrend";
+import { AppBar } from "@/components/AppBar";
+import { AccountHeader } from "@/components/AccountHeader";
+import { AccountOverview } from "@/components/AccountOverview";
 import { ReelPicker } from "@/components/ReelPicker";
 import { FollowerGrowthChart } from "@/components/FollowerGrowthChart";
 import { BottleneckBanner } from "@/components/BottleneckBanner";
@@ -17,25 +22,34 @@ export default function Page() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<AnalyzeResult | null>(null);
   const [snapshots, setSnapshots] = useState<AccountSnapshot[]>([]);
+  const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [snapDate, setSnapDate] = useState("");
   const [snapFollowers, setSnapFollowers] = useState("");
   const [syncStatus, setSyncStatus] = useState("");
+  const [syncing, setSyncing] = useState(false);
 
   async function onSync() {
-    setSyncStatus("동기화 중…");
-    const res = await fetch("/api/sync", { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) {
-      setSyncStatus("실패: " + (data.error ?? "오류"));
-      return;
+    setSyncing(true);
+    setSyncStatus("");
+    try {
+      const res = await fetch("/api/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setSyncStatus("동기화 실패: " + (data.error ?? "오류"));
+        return;
+      }
+      const [reelsRes, snapsRes, profileRes] = await Promise.all([
+        fetch("/api/reels").then((r) => r.json()),
+        fetch("/api/snapshots").then((r) => r.json()),
+        fetch("/api/profile").then((r) => r.json()),
+      ]);
+      setReels(reelsRes.reels);
+      setSnapshots(snapsRes.snapshots);
+      setProfile(profileRes.profile);
+      setSyncStatus(`동기화 완료: 릴스 ${data.syncedReels}개 · @${data.username}`);
+    } finally {
+      setSyncing(false);
     }
-    const [reelsRes, snapsRes] = await Promise.all([
-      fetch("/api/reels").then((r) => r.json()),
-      fetch("/api/snapshots").then((r) => r.json()),
-    ]);
-    setReels(reelsRes.reels);
-    setSnapshots(snapsRes.snapshots);
-    setSyncStatus(`동기화 완료: 릴스 ${data.syncedReels}개 · 팔로워 ${data.followerCount}`);
   }
 
   useEffect(() => {
@@ -45,6 +59,9 @@ export default function Page() {
     fetch("/api/snapshots")
       .then((r) => r.json())
       .then((d) => setSnapshots(d.snapshots));
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((d) => setProfile(d.profile));
   }, []);
 
   async function addSnapshot(e: FormEvent) {
@@ -78,30 +95,19 @@ export default function Page() {
   }, [selectedId]);
 
   const selected = reels.find((r) => r.id === selectedId) ?? null;
+  const overview = buildAccountOverview(reels, snapshots, profile);
+  const followerDelta = latestFollowerDelta(snapshots);
 
   return (
-    <main className="max-w-4xl mx-auto p-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">릴스 분석 대시보드</h1>
-        <div className="flex gap-2 items-center">
-          <ReelPicker reels={reels} selectedId={selectedId} onSelect={setSelectedId} />
-          <a href="/upload" className="text-sm text-blue-600 underline">
-            📷 업로드
-          </a>
-          <a href="/settings" className="text-sm text-blue-600 underline">
-            ⚙️ 설정
-          </a>
-          <button
-            onClick={onSync}
-            className="text-sm border rounded px-2 py-1 bg-pink-600 text-white hover:bg-pink-700"
-          >
-            📥 Instagram 동기화
-          </button>
-        </div>
-      </div>
-      {syncStatus && <p className="text-sm text-neutral-600">{syncStatus}</p>}
+    <>
+      <AppBar onSync={onSync} syncing={syncing} />
+      <main className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+        <AccountHeader profile={profile} followerDelta={followerDelta} />
+        <AccountOverview overview={overview} />
 
-      <FollowerGrowthChart snapshots={snapshots} />
+        <ReelPicker reels={reels} selectedId={selectedId} onSelect={setSelectedId} />
+
+        <FollowerGrowthChart snapshots={snapshots} />
       <form onSubmit={addSnapshot} className="flex gap-2 items-center text-sm">
         <input
           type="date"
@@ -140,7 +146,14 @@ export default function Page() {
           <AiGenerationPanel reelId={selected.id} />
         </>
       )}
-      {!selected && <p className="text-neutral-500">릴스를 선택하면 분석이 표시됩니다.</p>}
-    </main>
+        {!selected && <p className="text-neutral-500">릴스를 선택하면 분석이 표시됩니다.</p>}
+      </main>
+
+      {syncStatus && (
+        <div className="fixed bottom-4 left-1/2 z-30 -translate-x-1/2 rounded-lg bg-neutral-900 px-4 py-2 text-sm text-white shadow-card-hover">
+          {syncStatus}
+        </div>
+      )}
+    </>
   );
 }
