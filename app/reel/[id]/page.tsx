@@ -72,7 +72,7 @@ export default function ReelDetailPage() {
   }, [load]);
 
   return (
-    <main className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
+    <main className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
       <a href="/" className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline">
         <ArrowLeft size={14} /> 대시보드
       </a>
@@ -178,11 +178,16 @@ function ReelDetail({ reel, analysis, metricHistory, kpiDeltas, nav, onChange }:
 
       <BottleneckBanner bottleneck={analysis.diagnosis.bottleneck} delta={analysis.bottleneckDelta} />
       <ReelMetricTrend history={metricHistory} />
-      <RetentionChart curve={reel.retentionCurve ?? []} drops={analysis.drops} />
+      <div id="retention-chart" className="scroll-mt-4">
+        <RetentionChart curve={reel.retentionCurve ?? []} drops={analysis.drops} />
+      </div>
       <SrtUploadCard reelId={reel.id} analysis={analysis.transcript} onChange={onChange} />
-      <AudienceBreakdownCard breakdown={reel.audienceBreakdown} />
-      <ReachSourcesCard sources={reel.reachSources} />
-      <WatchTimeBucketsChart buckets={reel.watchTimeBuckets} />
+      {/* 보조 카드 — 넓은 화면에서 2열로 우측 여백 활용 */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <AudienceBreakdownCard breakdown={reel.audienceBreakdown} />
+        <ReachSourcesCard sources={reel.reachSources} />
+        <WatchTimeBucketsChart buckets={reel.watchTimeBuckets} />
+      </div>
       <ScreenshotUploadCard reelId={reel.id} />
       <DiagnosisCards
         strengths={analysis.diagnosis.strengths}
