@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Search, Film, Eye, Zap, Calendar } from "lucide-react";
 import type { Reel } from "@/lib/schemas";
 import { reelTitle } from "@/lib/ui/reelTitle";
@@ -9,11 +10,9 @@ import { cn } from "@/components/ui";
 
 interface Props {
   reels: Reel[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
 }
 
-export function ReelPicker({ reels, selectedId, onSelect }: Props) {
+export function ReelPicker({ reels }: Props) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<ReelSort>("latest");
 
@@ -61,12 +60,7 @@ export function ReelPicker({ reels, selectedId, onSelect }: Props) {
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {visible.map((r) => (
-            <ReelCard
-              key={r.id}
-              reel={r}
-              selected={r.id === selectedId}
-              onSelect={() => onSelect(r.id)}
-            />
+            <ReelCard key={r.id} reel={r} />
           ))}
         </div>
       )}
@@ -74,22 +68,11 @@ export function ReelPicker({ reels, selectedId, onSelect }: Props) {
   );
 }
 
-function ReelCard({
-  reel,
-  selected,
-  onSelect,
-}: {
-  reel: Reel;
-  selected: boolean;
-  onSelect: () => void;
-}) {
+function ReelCard({ reel }: { reel: Reel }) {
   return (
-    <button
-      onClick={onSelect}
-      className={cn(
-        "group overflow-hidden rounded-card border bg-surface text-left shadow-card transition-all hover:shadow-card-hover",
-        selected ? "border-brand-500 ring-2 ring-brand-200" : "border-border-subtle",
-      )}
+    <Link
+      href={`/reel/${reel.id}`}
+      className="group overflow-hidden rounded-card border border-border-subtle bg-surface text-left shadow-card transition-all hover:border-brand-300 hover:shadow-card-hover"
     >
       <div className="relative aspect-[9/16] bg-neutral-100">
         {reel.thumbnailUrl ? (
@@ -122,6 +105,6 @@ function ReelCard({
           )}
         </div>
       </div>
-    </button>
+    </Link>
   );
 }

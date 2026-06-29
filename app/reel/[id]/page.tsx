@@ -1,0 +1,122 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { ArrowLeft, ExternalLink, Film, Eye, Users, Heart, MessageCircle, Bookmark, Share2, Clock } from "lucide-react";
+import type { Reel, ReelMetricSnapshot } from "@/lib/schemas";
+import type { AnalyzeResult } from "@/lib/analysis/analyze";
+import { reelTitle } from "@/lib/ui/reelTitle";
+import { fmtCount } from "@/lib/ui/format";
+import { Stat, Skeleton, EmptyState } from "@/components/ui";
+import { BottleneckBanner } from "@/components/BottleneckBanner";
+import { DiagnosisCards } from "@/components/DiagnosisCards";
+import { MetricBars } from "@/components/MetricBars";
+import { RetentionChart } from "@/components/RetentionChart";
+import { ReelMetricTrend } from "@/components/ReelMetricTrend";
+import { SolutionsPanel } from "@/components/SolutionsPanel";
+import { AiGenerationPanel } from "@/components/AiGenerationPanel";
+
+interface DetailResponse {
+  reel: Reel;
+  analysis: AnalyzeResult;
+  metricHistory: ReelMetricSnapshot[];
+}
+
+export default function ReelDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = params.id;
+  const [data, setData] = useState<DetailResponse | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/reels/${id}`)
+      .then(async (r) => {
+        if (!r.ok) {
+          setError((await r.json()).error ?? "불러오기 실패");
+          return null;
+        }
+        return r.json();
+      })
+      .then((d) => d && setData(d))
+      .catch(() => setError("네트워크 오류"));
+  }, [id]);
+
+  return (
+    <main className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
+      <a href="/" className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline">
+        <ArrowLeft size={14} /> 대시보드
+      </a>
+
+      {error && <EmptyState icon={<Film size={26} />} title={error} />}
+
+      {!error && !data && (
+        <div className="space-y-3">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      )}
+
+      {data && <ReelDetail {...data} />}
+    </main>
+  );
+}
+
+function ReelDetail({ reel, analysis, metricHistory }: DetailResponse) {
+  return (
+    <>
+      {/* 헤더 */}
+      <div className="flex gap-4">
+        <div className="relative aspect-[9/16] w-24 shrink-0 overflow-hidden rounded-card border border-border-subtle bg-neutral-100">
+          {reel.thumbnailUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={reel.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-neutral-300">
+              <Film size={26} />
+            </div>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-bold leading-snug text-neutral-900">{reelTitle(reel)}</h1>
+          <p className="mt-1 text-sm text-neutral-500">{reel.postedAt.slice(0, 10)}</p>
+          {reel.permalink && (
+            <a
+              href={reel.permalink}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-1 text-sm text-brand-600 hover:underline"
+            >
+              <ExternalLink size={14} /> 인스타그램에서 보기
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* 전체 지표 */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="조회수" value={fmtCount(reel.views)} icon={<Eye size={16} />} />
+        <Stat label="도달" value={fmtCount(reel.reach)} icon={<Users size={16} />} />
+        <Stat label="좋아요" value={fmtCount(reel.likes)} icon={<Heart size={16} />} />
+        <Stat label="댓글" value={fmtCount(reel.comments)} icon={<MessageCircle size={16} />} />
+        <Stat label="저장" value={fmtCount(reel.saves)} icon={<Bookmark size={16} />} />
+        <Stat label="공유" value={fmtCount(reel.shares)} icon={<Share2 size={16} />} />
+        <Stat label="평균 시청" value={`${reel.avgWatchTimeSec.toFixed(1)}초`} icon={<Clock size={16} />} />
+        {typeof reel.followsFromReel === "number" && (
+          <Stat label="릴스發 팔로우" value={fmtCount(reel.followsFromReel)} icon={<Users size={16} />} />
+        )}
+      </div>
+
+      <BottleneckBanner bottleneck={analysis.diagnosis.bottleneck} delta={analysis.bottleneckDelta} />
+      <ReelMetricTrend history={metricHistory} />
+      <RetentionChart curve={reel.retentionCurve ?? []} drops={analysis.drops} />
+      <DiagnosisCards
+        strengths={analysis.diagnosis.strengths}
+        weaknesses={analysis.diagnosis.weaknesses}
+      />
+      <MetricBars verdicts={analysis.diagnosis.verdicts} />
+      <SolutionsPanel prescriptions={analysis.prescriptions} />
+      <AiGenerationPanel reelId={reel.id} />
+    </>
+  );
+}

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
 import type { Reel, AccountSnapshot, AccountProfile } from "@/lib/schemas";
-import type { AnalyzeResult } from "@/lib/analysis/analyze";
 import { buildAccountOverview } from "@/lib/analysis/accountOverview";
 import { latestFollowerDelta } from "@/lib/analysis/followerTrend";
 import { AppBar } from "@/components/AppBar";
@@ -10,18 +9,10 @@ import { AccountOverview } from "@/components/AccountOverview";
 import { Input, Button } from "@/components/ui";
 import { ReelPicker } from "@/components/ReelPicker";
 import { FollowerGrowthChart } from "@/components/FollowerGrowthChart";
-import { BottleneckBanner } from "@/components/BottleneckBanner";
-import { DiagnosisCards } from "@/components/DiagnosisCards";
-import { MetricBars } from "@/components/MetricBars";
-import { RetentionChart } from "@/components/RetentionChart";
 import { GrowthTrend } from "@/components/GrowthTrend";
-import { SolutionsPanel } from "@/components/SolutionsPanel";
-import { AiGenerationPanel } from "@/components/AiGenerationPanel";
 
 export default function Page() {
   const [reels, setReels] = useState<Reel[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<AnalyzeResult | null>(null);
   const [snapshots, setSnapshots] = useState<AccountSnapshot[]>([]);
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [snapDate, setSnapDate] = useState("");
@@ -84,18 +75,6 @@ export default function Page() {
     setSnapFollowers("");
   }
 
-  useEffect(() => {
-    if (!selectedId) return;
-    fetch("/api/recommend", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reelId: selectedId }),
-    })
-      .then((r) => r.json())
-      .then(setAnalysis);
-  }, [selectedId]);
-
-  const selected = reels.find((r) => r.id === selectedId) ?? null;
   const overview = buildAccountOverview(reels, snapshots, profile);
   const followerDelta = latestFollowerDelta(snapshots);
 
@@ -106,15 +85,14 @@ export default function Page() {
         <AccountHeader profile={profile} followerDelta={followerDelta} />
         <AccountOverview overview={overview} />
 
-        <ReelPicker reels={reels} selectedId={selectedId} onSelect={setSelectedId} />
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold text-neutral-700">릴스 — 카드를 클릭하면 상세 분석</h2>
+          <ReelPicker reels={reels} />
+        </div>
 
         <FollowerGrowthChart snapshots={snapshots} />
         <form onSubmit={addSnapshot} className="flex flex-wrap items-center gap-2 text-sm">
-          <Input
-            type="date"
-            value={snapDate}
-            onChange={(e) => setSnapDate(e.target.value)}
-          />
+          <Input type="date" value={snapDate} onChange={(e) => setSnapDate(e.target.value)} />
           <Input
             type="number"
             placeholder="팔로워 수"
@@ -125,24 +103,7 @@ export default function Page() {
           <Button type="submit">스냅샷 추가</Button>
         </form>
 
-      {analysis && selected && (
-        <>
-          <BottleneckBanner
-            bottleneck={analysis.diagnosis.bottleneck}
-            delta={analysis.bottleneckDelta}
-          />
-          <DiagnosisCards
-            strengths={analysis.diagnosis.strengths}
-            weaknesses={analysis.diagnosis.weaknesses}
-          />
-          <MetricBars verdicts={analysis.diagnosis.verdicts} />
-          <RetentionChart curve={selected.retentionCurve ?? []} drops={analysis.drops} />
-          <GrowthTrend reels={reels} />
-          <SolutionsPanel prescriptions={analysis.prescriptions} />
-          <AiGenerationPanel reelId={selected.id} />
-        </>
-      )}
-        {!selected && <p className="text-neutral-500">릴스를 선택하면 분석이 표시됩니다.</p>}
+        <GrowthTrend reels={reels} />
       </main>
 
       {syncStatus && (
