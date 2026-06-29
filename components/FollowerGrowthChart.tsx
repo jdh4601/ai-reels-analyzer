@@ -2,13 +2,14 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import { Users, TrendingUp, TrendingDown } from "lucide-react";
 import type { AccountSnapshot } from "@/lib/schemas";
-import { sortByDate, latestFollowerDelta } from "@/lib/analysis/followerTrend";
+import { sortByDate, latestFollowerDelta, followerTrendMode } from "@/lib/analysis/followerTrend";
 import { Card, CardHeader, CardBody, EmptyState } from "@/components/ui";
 
 export function FollowerGrowthChart({ snapshots }: { snapshots: AccountSnapshot[] }) {
   const sorted = sortByDate(snapshots);
   const delta = latestFollowerDelta(snapshots);
   const latest = sorted[sorted.length - 1];
+  const mode = followerTrendMode(snapshots);
 
   const action =
     latest != null ? (
@@ -33,12 +34,27 @@ export function FollowerGrowthChart({ snapshots }: { snapshots: AccountSnapshot[
     <Card>
       <CardHeader title="팔로워 성장 추이" icon={<Users size={16} className="text-brand-600" />} action={action} />
       <CardBody>
-        {sorted.length < 2 ? (
+        {mode === "empty" ? (
           <EmptyState
             icon={<Users size={26} />}
-            title="스냅샷 2건 이상이면 그래프가 표시됩니다"
+            title="아직 팔로워 데이터가 없습니다"
             hint="동기화하거나 아래 폼에서 팔로워 수를 직접 등록하세요."
           />
+        ) : mode === "card" ? (
+          // 데이터 2건 이하 — 직선 차트는 +N 증가를 과장하므로 숫자로만 표시
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <span className="text-3xl font-bold tabular-nums text-neutral-900">
+              {latest != null ? latest.followerCount.toLocaleString() : "-"}
+              <span className="ml-1 text-base font-medium text-neutral-500">명</span>
+            </span>
+            {delta !== null && delta !== 0 && (
+              <span className={`mt-1 inline-flex items-center gap-0.5 text-sm ${delta > 0 ? "text-band-strong" : "text-band-weak"}`}>
+                {delta > 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                직전 대비 {delta > 0 ? "+" : ""}{delta}
+              </span>
+            )}
+            <p className="mt-2 text-xs text-neutral-400">스냅샷 3건부터 추이 그래프가 표시됩니다.</p>
+          </div>
         ) : (
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={sorted} margin={{ top: 6, right: 8, bottom: 0, left: -8 }}>

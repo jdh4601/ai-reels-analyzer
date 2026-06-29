@@ -110,6 +110,8 @@ function WatchTimeCompletionChart({
 }: {
   series: Metrics["series"];
 }) {
+  // 완시율 데이터가 전혀 없으면 죽은 라인/우측 축을 숨겨 단일 축으로 깔끔하게
+  const hasCompletion = series.some((s) => s.completionRate !== null);
   return (
     <Card>
       <CardHeader
@@ -139,19 +141,24 @@ function WatchTimeCompletionChart({
                 tick={{ fontSize: 11, fill: "#94a3b8" }}
                 tickFormatter={(v) => `${v}초`}
               />
-              <YAxis
-                yAxisId="right"
-                orientation="right"
-                unit="%"
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
-              />
+              {hasCompletion && (
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  unit="%"
+                  tick={{ fontSize: 11, fill: "#94a3b8" }}
+                />
+              )}
               <Tooltip
                 formatter={(v, name) => {
                   if (name === "avgWatchTimeSec") return [fmtSec(Number(v)), "평균 시청"];
                   if (name === "completionRate") return [fmtPct(Number(v)), "완시율"];
                   return [Number(v), name];
                 }}
-                labelFormatter={(l) => `${l}번째 릴스`}
+                labelFormatter={(l, p) => {
+                  const d = (p?.[0]?.payload ?? {}) as { title?: string; postedAt?: string };
+                  return d.title ? `${d.title} · ${d.postedAt ?? ""}` : `${l}번째 릴스`;
+                }}
                 contentStyle={{ borderRadius: 8, border: "1px solid #e9edf3", fontSize: 12 }}
               />
               <Bar
@@ -162,27 +169,31 @@ function WatchTimeCompletionChart({
                 strokeWidth={1}
                 radius={[4, 4, 0, 0]}
               />
-              <Line
-                yAxisId="right"
-                type="monotone"
-                dataKey="completionRate"
-                stroke="#16a34a"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                connectNulls={false}
-              />
-              <ReferenceLine
-                yAxisId="right"
-                y={BENCHMARKS.completionRate.weakBelow}
-                stroke="#dc2626"
-                strokeDasharray="4 4"
-                label={{
-                  value: "약점",
-                  position: "insideBottomRight",
-                  fontSize: 10,
-                  fill: "#dc2626",
-                }}
-              />
+              {hasCompletion && (
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="completionRate"
+                  stroke="#16a34a"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  connectNulls={false}
+                />
+              )}
+              {hasCompletion && (
+                <ReferenceLine
+                  yAxisId="right"
+                  y={BENCHMARKS.completionRate.weakBelow}
+                  stroke="#dc2626"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: "약점",
+                    position: "insideBottomRight",
+                    fontSize: 10,
+                    fill: "#dc2626",
+                  }}
+                />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         )}
@@ -230,7 +241,10 @@ function SkipRateChart({
                 <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 11, fill: "#94a3b8" }} />
                 <Tooltip
                   formatter={(v) => [fmtPct(Number(v)), "Skip Rate"]}
-                  labelFormatter={(l) => `${l}번째 릴스`}
+                  labelFormatter={(l, p) => {
+                  const d = (p?.[0]?.payload ?? {}) as { title?: string; postedAt?: string };
+                  return d.title ? `${d.title} · ${d.postedAt ?? ""}` : `${l}번째 릴스`;
+                }}
                   contentStyle={{ borderRadius: 8, border: "1px solid #e9edf3", fontSize: 12 }}
                 />
                 <Area
@@ -405,7 +419,10 @@ function ProfileVisitRateChart({
               <YAxis unit="%" tick={{ fontSize: 11, fill: "#94a3b8" }} />
               <Tooltip
                 formatter={(v) => [fmtPct(Number(v)), "프로필 방문률"]}
-                labelFormatter={(l) => `${l}번째 릴스`}
+                labelFormatter={(l, p) => {
+                  const d = (p?.[0]?.payload ?? {}) as { title?: string; postedAt?: string };
+                  return d.title ? `${d.title} · ${d.postedAt ?? ""}` : `${l}번째 릴스`;
+                }}
                 contentStyle={{ borderRadius: 8, border: "1px solid #e9edf3", fontSize: 12 }}
               />
               <Area

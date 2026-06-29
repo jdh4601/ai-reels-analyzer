@@ -2,28 +2,25 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { PieChartIcon } from "lucide-react";
 import type { Reel } from "@/lib/schemas";
+import { engagementBreakdown, type EngagementKey } from "@/lib/analysis/engagementBreakdown";
 import { Card, CardHeader, CardBody, EmptyState } from "@/components/ui";
 
 interface Props {
   reels: Reel[];
 }
 
-const COLORS = {
-  likes: "#f43f5e",
+// 색상은 engagementBreakdown의 키에 1:1 대응 (조각·범례·색 항상 일치)
+const COLORS: Record<EngagementKey, string> = {
+  shares: "#10b981",
   comments: "#f59e0b",
   saves: "#3b82f6",
-  shares: "#10b981",
-};
-
-const LABELS: Record<string, string> = {
-  likes: "좋아요",
-  comments: "댓글",
-  saves: "저장",
-  shares: "공유",
+  likes: "#f43f5e",
 };
 
 export function EngagementPieChart({ reels }: Props) {
-  if (reels.length === 0) {
+  const data = engagementBreakdown(reels);
+
+  if (data.length === 0) {
     return (
       <Card>
         <CardHeader title="인게이지먼트 구성" icon={<PieChartIcon size={16} className="text-brand-600" />} />
@@ -37,20 +34,6 @@ export function EngagementPieChart({ reels }: Props) {
       </Card>
     );
   }
-
-  const totals = reels.reduce(
-    (acc, r) => ({
-      likes: acc.likes + r.likes,
-      comments: acc.comments + r.comments,
-      saves: acc.saves + r.saves,
-      shares: acc.shares + r.shares,
-    }),
-    { likes: 0, comments: 0, saves: 0, shares: 0 },
-  );
-
-  const data = Object.entries(totals)
-    .filter(([, value]) => value > 0)
-    .map(([key, value]) => ({ name: LABELS[key], key, value }));
 
   return (
     <Card>
@@ -67,13 +50,23 @@ export function EngagementPieChart({ reels }: Props) {
               innerRadius={50}
               outerRadius={80}
               paddingAngle={2}
+              isAnimationActive={false}
+              startAngle={90}
+              endAngle={-270}
+              label={({ percent }) =>
+                (percent ?? 0) >= 0.06 ? `${Math.round((percent ?? 0) * 100)}%` : ""
+              }
+              labelLine={false}
             >
               {data.map((entry) => (
-                <Cell key={entry.key} fill={COLORS[entry.key as keyof typeof COLORS]} />
+                <Cell key={entry.key} fill={COLORS[entry.key]} />
               ))}
             </Pie>
             <Tooltip
-              formatter={(v, n) => [`${Number(v ?? 0).toLocaleString()}`, n]}
+              formatter={(v, n, item) => [
+                `${Number(v ?? 0).toLocaleString()} (${Math.round(item?.payload?.pct ?? 0)}%)`,
+                n,
+              ]}
               contentStyle={{ borderRadius: 8, border: "1px solid #e9edf3", fontSize: 12 }}
             />
             <Legend verticalAlign="bottom" height={24} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
