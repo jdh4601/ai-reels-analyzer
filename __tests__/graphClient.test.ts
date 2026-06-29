@@ -13,16 +13,24 @@ function fakeFetch(routes: Record<string, unknown>) {
   };
 }
 
-test("getProfile은 user_id/username/followers_count를 반환", async () => {
+test("getProfile은 user_id/username/followers_count/avatar/media_count를 반환", async () => {
   const client = createGraphClient({
     accessToken: "tok",
     fetchImpl: fakeFetch({
-      "/me?": { user_id: "123", username: "founder", followers_count: 1234 },
+      "/me?": {
+        user_id: "123",
+        username: "founder",
+        followers_count: 1234,
+        profile_picture_url: "https://cdn/avatar.jpg",
+        media_count: 42,
+      },
     }) as unknown as typeof fetch,
   });
   const p = await client.getProfile();
   expect(p.userId).toBe("123");
   expect(p.followersCount).toBe(1234);
+  expect(p.avatarUrl).toBe("https://cdn/avatar.jpg");
+  expect(p.mediaCount).toBe(42);
 });
 
 test("listReels는 REELS 타입만 반환", async () => {

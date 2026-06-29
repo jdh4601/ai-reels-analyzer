@@ -49,10 +49,22 @@ export const ReelSchema = z.object({
   reachSources: ReachSourcesSchema.optional(),
   followsFromReel: z.number().nonnegative().optional(),
   caption: z.string().optional(),
+  thumbnailUrl: z.string().optional(), // Graph API 썸네일
+  permalink: z.string().optional(), // 인스타 원본 링크
   transcript: z.array(TranscriptLineSchema).optional(),
   derived: DerivedRatesSchema.optional(),
 });
 export type Reel = z.infer<typeof ReelSchema>;
+
+// 계정 프로필 (Graph getProfile + 동기화 저장)
+export const AccountProfileSchema = z.object({
+  username: z.string(),
+  avatarUrl: z.string().optional(),
+  followersCount: z.number().nonnegative(),
+  mediaCount: z.number().nonnegative(),
+  updatedAt: z.string(),
+});
+export type AccountProfile = z.infer<typeof AccountProfileSchema>;
 
 export const AccountSnapshotSchema = z.object({
   date: z.string(),

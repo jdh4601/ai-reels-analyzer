@@ -34,6 +34,19 @@ test("mapMediaToReel은 집계 지표를 Reel로 매핑(평균시청 ms→초)",
   expect(reel.durationSec).toBe(0); // API가 길이를 안 줌
 });
 
+test("mapMediaToReel은 썸네일/퍼머링크를 매핑", () => {
+  const media = {
+    id: "m3",
+    media_product_type: "REELS",
+    timestamp: "2026-06-03T00:00:00+0000",
+    thumbnail_url: "https://cdn/thumb.jpg",
+    permalink: "https://instagram.com/reel/abc",
+  };
+  const reel = mapMediaToReel(media, {});
+  expect(reel.thumbnailUrl).toBe("https://cdn/thumb.jpg");
+  expect(reel.permalink).toBe("https://instagram.com/reel/abc");
+});
+
 test("mapMediaToReel은 누락 지표를 0으로 채운다", () => {
   const media = { id: "m2", media_type: "VIDEO", media_product_type: "REELS", timestamp: "2026-06-02T00:00:00+0000" };
   const reel = mapMediaToReel(media, {});

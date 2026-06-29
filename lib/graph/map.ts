@@ -20,6 +20,8 @@ export interface GraphMedia {
   media_product_type?: string;
   caption?: string;
   timestamp: string;
+  thumbnail_url?: string;
+  permalink?: string;
 }
 
 // API 집계 지표만 매핑. 영상 길이·3초훅·잔존곡선·유입소스는 API가 안 줘서 비움(스샷 보존 대상).
@@ -37,5 +39,7 @@ export function mapMediaToReel(media: GraphMedia, insights: Record<string, numbe
     shares: num("shares"),
     avgWatchTimeSec: num("ig_reels_avg_watch_time") / 1000, // ms → s
     caption: media.caption,
+    thumbnailUrl: media.thumbnail_url,
+    permalink: media.permalink,
   };
 }

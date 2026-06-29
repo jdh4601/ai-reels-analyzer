@@ -19,6 +19,8 @@ export interface GraphProfile {
   userId: string;
   username: string;
   followersCount: number;
+  avatarUrl?: string;
+  mediaCount: number;
 }
 
 interface FetchResult {
@@ -59,21 +61,27 @@ export function createGraphClient(opts: Options): GraphClient {
 
   return {
     async getProfile() {
-      const json = (await request("me", { fields: "user_id,username,followers_count" })) as {
+      const json = (await request("me", {
+        fields: "user_id,username,followers_count,profile_picture_url,media_count",
+      })) as {
         user_id: string;
         username: string;
         followers_count?: number;
+        profile_picture_url?: string;
+        media_count?: number;
       };
       return {
         userId: json.user_id,
         username: json.username,
         followersCount: json.followers_count ?? 0,
+        avatarUrl: json.profile_picture_url,
+        mediaCount: json.media_count ?? 0,
       };
     },
 
     async listReels() {
       const json = (await request("me/media", {
-        fields: "id,media_type,media_product_type,caption,timestamp",
+        fields: "id,media_type,media_product_type,caption,timestamp,thumbnail_url,permalink",
       })) as { data?: GraphMedia[] };
       return (json.data ?? []).filter((m) => m.media_product_type === "REELS");
     },

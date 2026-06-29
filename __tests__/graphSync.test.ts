@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { syncFromGraph } from "@/lib/graph/sync";
 import { createJsonReelRepository } from "@/lib/store/reelRepository";
 import { createJsonAccountRepository } from "@/lib/store/accountRepository";
+import { createJsonProfileRepository } from "@/lib/store/profileRepository";
 import type { GraphClient } from "@/lib/graph/client";
 import type { Reel } from "@/lib/schemas";
 
@@ -12,7 +13,13 @@ function tmpDir() {
 }
 
 const fakeClient: GraphClient = {
-  getProfile: async () => ({ userId: "1", username: "founder", followersCount: 1500 }),
+  getProfile: async () => ({
+    userId: "1",
+    username: "founder",
+    followersCount: 1500,
+    avatarUrl: "https://cdn/a.jpg",
+    mediaCount: 7,
+  }),
   listReels: async () => [
     { id: "media-1", media_product_type: "REELS", caption: "API 캡션", timestamp: "2026-06-01T00:00:00+0000" },
   ],
@@ -46,6 +53,20 @@ test("동기화는 집계 수치를 갱신하고 스샷 데이터(훅·길이·�
   expect(result.syncedReels).toBe(1);
   const snaps = await accountRepo.list();
   expect(snaps[0]).toMatchObject({ date: "2026-06-29", followerCount: 1500 });
+});
+
+test("프로필 저장소가 주어지면 계정 프로필을 저장한다", async () => {
+  const reelRepo = createJsonReelRepository(tmpDir());
+  const accountRepo = createJsonAccountRepository(tmpDir());
+  const profileRepo = createJsonProfileRepository(tmpDir());
+
+  const result = await syncFromGraph(fakeClient, reelRepo, accountRepo, "2026-06-29", profileRepo);
+
+  expect(result.username).toBe("founder");
+  const profile = await profileRepo.get();
+  expect(profile?.username).toBe("founder");
+  expect(profile?.mediaCount).toBe(7);
+  expect(profile?.avatarUrl).toBe("https://cdn/a.jpg");
 });
 
 test("신규 릴스는 길이 0(미상)으로 생성된다", async () => {
