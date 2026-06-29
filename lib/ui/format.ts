@@ -28,3 +28,7 @@ export function fmtCount(n: number): string {
   const rounded = Math.round(man * 10) / 10;
   return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}만`;
 }
+
+export function fmtSec(n: number): string {
+  return `${n.toFixed(1)}초`;
+}

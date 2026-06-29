@@ -30,8 +30,24 @@ export const DerivedRatesSchema = z.object({
   engagementRate: z.number(),
   completionRate: z.number(),
   followRate: z.number().optional(),
+  followConversionRate: z.number().optional(), // followsFromReel / reach × 100
+  profileVisitRate: z.number().optional(), // profileVisits / reach × 100
 });
 export type DerivedRates = z.infer<typeof DerivedRatesSchema>;
+
+// 팔로워 / 논팔로워 비중 (계정 상태 스크린샷)
+export const AudienceBreakdownSchema = z.object({
+  followersPct: z.number().min(0).max(100),
+  nonFollowersPct: z.number().min(0).max(100),
+});
+export type AudienceBreakdown = z.infer<typeof AudienceBreakdownSchema>;
+
+// 시청 지속 시간 분포 (시청 지속 그래프 스크린샷)
+export const WatchTimeBucketSchema = z.object({
+  label: z.string(), // 예: "0~3초", "3~10초", "10초~"
+  pct: z.number().min(0).max(100),
+});
+export type WatchTimeBucket = z.infer<typeof WatchTimeBucketSchema>;
 
 export const ReelSchema = z.object({
   id: z.string().min(1),
@@ -45,14 +61,18 @@ export const ReelSchema = z.object({
   shares: z.number().nonnegative(),
   avgWatchTimeSec: z.number().nonnegative(),
   hookRetention3s: z.number().min(0).max(100).optional(),
+  skipRate: z.number().min(0).max(100).optional(), // Instagram 스킵 비율(%). 3초 후 잔존률 = 100 - skipRate
   retentionCurve: z.array(RetentionPointSchema).optional(),
   reachSources: ReachSourcesSchema.optional(),
   followsFromReel: z.number().nonnegative().optional(),
+  profileVisits: z.number().nonnegative().optional(),
   caption: z.string().optional(),
   thumbnailUrl: z.string().optional(), // Graph API 썸네일
   permalink: z.string().optional(), // 인스타 원본 링크
   transcript: z.array(TranscriptLineSchema).optional(),
   derived: DerivedRatesSchema.optional(),
+  audienceBreakdown: AudienceBreakdownSchema.optional(),
+  watchTimeBuckets: z.array(WatchTimeBucketSchema).optional(),
 });
 export type Reel = z.infer<typeof ReelSchema>;
 
@@ -86,10 +106,14 @@ export const AccountSnapshotSchema = z.object({
 });
 export type AccountSnapshot = z.infer<typeof AccountSnapshotSchema>;
 
-// Claude Vision 스크린샷 파싱 결과 (API가 못 주는 3개 지표)
+// Claude Vision 스크린샷 파싱 결과
 export const ScreenshotParseSchema = z.object({
   hookRetention3s: z.number().min(0).max(100).optional(),
+  skipRate: z.number().min(0).max(100).optional(),
   retentionCurve: z.array(RetentionPointSchema).optional(),
   reachSources: ReachSourcesSchema.optional(),
+  audienceBreakdown: AudienceBreakdownSchema.optional(),
+  watchTimeBuckets: z.array(WatchTimeBucketSchema).optional(),
+  profileVisits: z.number().nonnegative().optional(),
 });
 export type ScreenshotParse = z.infer<typeof ScreenshotParseSchema>;

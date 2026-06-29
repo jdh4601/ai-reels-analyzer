@@ -1,21 +1,35 @@
 import { BarChart3 } from "lucide-react";
 import type { MetricVerdict } from "@/lib/analysis/diagnosis";
-import { BENCHMARKS } from "@/config/benchmarks";
-import { metricBarGeometry } from "@/lib/ui/metricBar";
+import { verdictBarGeometry } from "@/lib/ui/metricBar";
 import { fmtPct } from "@/lib/ui/format";
 import { Card, CardHeader, CardBody, Badge } from "@/components/ui";
 
 const BAND_LABEL = { weak: "약점", ok: "보통", strong: "강점" } as const;
 
-export function MetricBars({ verdicts }: { verdicts: MetricVerdict[] }) {
+interface Props {
+  verdicts: MetricVerdict[];
+  /** 개인화 베이스라인(내 평균) 임계값으로 진단됐는지 */
+  baselineActive?: boolean;
+}
+
+export function MetricBars({ verdicts, baselineActive = false }: Props) {
   return (
     <Card>
-      <CardHeader title="지표 벤치마크" icon={<BarChart3 size={16} className="text-brand-600" />} />
+      <CardHeader
+        title="지표 벤치마크"
+        icon={<BarChart3 size={16} className="text-brand-600" />}
+        action={
+          <span className="text-xs text-neutral-400">
+            {baselineActive ? "내 평균 기준" : "전체 벤치마크 기준"}
+          </span>
+        }
+      />
       <CardBody className="space-y-3.5">
         {verdicts.map((v) => {
-          const g = metricBarGeometry(v.value, BENCHMARKS[v.key]);
+          // 마커는 라벨(band)을 만든 그 threshold로 그린다 — 라벨↔시각화 항상 일치
+          const g = verdictBarGeometry(v);
           return (
-            <div key={v.key} title={`벤치마크: <${BENCHMARKS[v.key].weakBelow}% 약점 · >${BENCHMARKS[v.key].strongAbove}% 강점`}>
+            <div key={v.key}>
               <div className="mb-1 flex items-center justify-between text-sm">
                 <span className="text-neutral-700">{v.label}</span>
                 <span className="flex items-center gap-1.5">
@@ -34,6 +48,15 @@ export function MetricBars({ verdicts }: { verdicts: MetricVerdict[] }) {
                   style={{ left: `${g.markerPct}%` }}
                   className="absolute top-1/2 h-3.5 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-900 shadow"
                 />
+              </div>
+              {/* 구간 경계값 눈금 */}
+              <div className="relative mt-0.5 h-3 text-[10px] tabular-nums text-neutral-400">
+                <span className="absolute -translate-x-1/2" style={{ left: `${g.weakPct}%` }}>
+                  {fmtPct(v.threshold.weakBelow)}
+                </span>
+                <span className="absolute -translate-x-1/2" style={{ left: `${g.weakPct + g.okPct}%` }}>
+                  {fmtPct(v.threshold.strongAbove)}
+                </span>
               </div>
             </div>
           );

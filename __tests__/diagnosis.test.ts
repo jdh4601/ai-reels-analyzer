@@ -32,3 +32,14 @@ test("hookRetention3s 미입력 시 verdict에서 제외", () => {
   const d = diagnose(noHook);
   expect(d.verdicts.map((v) => v.key)).not.toContain("hookRetention3s");
 });
+
+test("각 verdict는 band를 만든 그 threshold를 함께 담는다", () => {
+  // 글로벌과 다른 커스텀(베이스라인 흉내) 임계값을 주입
+  const custom = {
+    ...BENCHMARKS,
+    saveRate: { weakBelow: 0.1, strongAbove: 0.18, weight: 3, label: "저장율" },
+  };
+  const d = diagnose(reel, custom);
+  const save = d.verdicts.find((v) => v.key === "saveRate");
+  expect(save?.threshold).toEqual(custom.saveRate);
+});

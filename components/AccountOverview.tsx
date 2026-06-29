@@ -16,7 +16,7 @@ function followerHint(delta: number | null): string {
 
 export function AccountOverview({ overview }: AccountOverviewProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
       <Stat
         label="팔로워"
         value={overview.followers.toLocaleString()}

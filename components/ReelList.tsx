@@ -1,18 +1,18 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, Film, Eye, Zap, Calendar } from "lucide-react";
+import { Search, Film, Eye, Calendar, Heart, MessageCircle, Share2, Bookmark } from "lucide-react";
 import type { Reel } from "@/lib/schemas";
 import { reelTitle } from "@/lib/ui/reelTitle";
 import { selectReels, SORT_LABELS, type ReelSort } from "@/lib/ui/reelSelect";
-import { fmtCount } from "@/lib/ui/format";
+import { fmtCount, fmtPct } from "@/lib/ui/format";
 import { cn } from "@/components/ui";
 
 interface Props {
   reels: Reel[];
 }
 
-export function ReelPicker({ reels }: Props) {
+export function ReelList({ reels }: Props) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<ReelSort>("latest");
 
@@ -29,6 +29,11 @@ export function ReelPicker({ reels }: Props) {
 
   return (
     <section className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-neutral-700">릴스 목록</h2>
+        <span className="text-xs text-neutral-500">{visible.length}개</span>
+      </div>
+
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={15} />
@@ -58,9 +63,9 @@ export function ReelPicker({ reels }: Props) {
       {visible.length === 0 ? (
         <p className="py-6 text-center text-sm text-neutral-500">검색 결과가 없습니다.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="divide-y divide-border-subtle rounded-card border border-border-subtle bg-surface">
           {visible.map((r) => (
-            <ReelCard key={r.id} reel={r} />
+            <ReelRow key={r.id} reel={r} />
           ))}
         </div>
       )}
@@ -68,43 +73,61 @@ export function ReelPicker({ reels }: Props) {
   );
 }
 
-function ReelCard({ reel }: { reel: Reel }) {
+function ReelRow({ reel }: { reel: Reel }) {
   return (
     <Link
       href={`/reel/${reel.id}`}
-      className="group overflow-hidden rounded-card border border-border-subtle bg-surface text-left shadow-card transition-all hover:border-brand-300 hover:shadow-card-hover"
+      className="group flex items-center gap-3 p-3 text-left transition-colors hover:bg-surface-muted"
     >
-      <div className="relative aspect-[9/16] bg-neutral-100">
+      <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded-md bg-neutral-100">
         {reel.thumbnailUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={reel.thumbnailUrl} alt="" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-neutral-300">
-            <Film size={28} />
+            <Film size={16} />
           </div>
         )}
-        <span className="absolute bottom-1.5 right-1.5 inline-flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[11px] font-medium text-white">
-          <Eye size={11} />
-          {fmtCount(reel.views)}
-        </span>
       </div>
-      <div className="space-y-1 p-2.5">
-        <p className="line-clamp-2 text-sm font-medium leading-snug text-neutral-900">
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-neutral-900 group-hover:text-brand-600">
           {reelTitle(reel)}
         </p>
-        <div className="flex items-center gap-2 text-[11px] text-neutral-500">
+        <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-neutral-500">
           <span className="inline-flex items-center gap-0.5">
             <Calendar size={11} />
             {reel.postedAt.slice(0, 10)}
           </span>
-          {typeof reel.hookRetention3s === "number" && (
-            <span className="inline-flex items-center gap-0.5">
-              <Zap size={11} />
-              {reel.hookRetention3s}%
-            </span>
-          )}
+          <span className="inline-flex items-center gap-0.5">
+            <Eye size={11} />
+            {fmtCount(reel.views)}
+          </span>
         </div>
       </div>
+
+      <div className="hidden shrink-0 items-center gap-3 text-xs text-neutral-600 sm:flex">
+        <Metric icon={<Heart size={12} />} value={reel.likes} />
+        <Metric icon={<MessageCircle size={12} />} value={reel.comments} />
+        <Metric icon={<Bookmark size={12} />} value={reel.saves} />
+        <Metric icon={<Share2 size={12} />} value={reel.shares} />
+      </div>
+
+      <div className="shrink-0 text-right">
+        <div className="text-xs font-semibold text-neutral-900">
+          {fmtPct(reel.derived?.engagementRate ?? 0)}
+        </div>
+        <div className="text-[10px] text-neutral-500">인게이지먼트</div>
+      </div>
     </Link>
+  );
+}
+
+function Metric({ icon, value }: { icon: React.ReactNode; value: number }) {
+  return (
+    <span className="inline-flex items-center gap-0.5 tabular-nums">
+      {icon}
+      {fmtCount(value)}
+    </span>
   );
 }

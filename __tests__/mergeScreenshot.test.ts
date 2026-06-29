@@ -47,3 +47,20 @@ test("집계 지표(views 등)는 건드리지 않는다", () => {
   expect(merged.views).toBe(1000);
   expect(merged.id).toBe("a");
 });
+
+test("profileVisits를 보존/병합", () => {
+  const merged = mergeScreenshotParse(reel({ profileVisits: 120 }), { hookRetention3s: 40 });
+  expect(merged.profileVisits).toBe(120);
+  expect(mergeScreenshotParse(reel({}), { profileVisits: 80 }).profileVisits).toBe(80);
+});
+
+test("skipRate가 주어지면 3초 후 잔존율을 100 - skipRate로 환산", () => {
+  const merged = mergeScreenshotParse(reel({}), { skipRate: 68.56 });
+  expect(merged.skipRate).toBe(68.56);
+  expect(merged.hookRetention3s).toBeCloseTo(31.44, 5);
+});
+
+test("hookRetention3s가 직접 주어지면 skipRate 변환보다 우선", () => {
+  const merged = mergeScreenshotParse(reel({}), { hookRetention3s: 45, skipRate: 68.56 });
+  expect(merged.hookRetention3s).toBe(45);
+});

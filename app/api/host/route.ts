@@ -14,6 +14,12 @@ function lanIPv4(): string | null {
 }
 
 export async function GET(req: Request) {
+  // Docker 등 외부에서 직접 서버 IP를 지정한 경우 우선 사용
+  const envHost = process.env.LAN_HOST?.trim();
+  if (envHost) {
+    return NextResponse.json({ lanUrl: envHost });
+  }
+
   const host = req.headers.get("host") ?? "";
   const port = host.includes(":") ? host.split(":")[1] : "3000";
   const ip = lanIPv4();

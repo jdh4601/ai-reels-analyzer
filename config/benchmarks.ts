@@ -5,7 +5,8 @@ export type MetricKey =
   | "saveRate"
   | "likeRate"
   | "commentRate"
-  | "followRate";
+  | "followRate"
+  | "nonFollowerReach";
 
 export interface Threshold {
   weakBelow: number;   // 이 값 미만이면 🔴 약점
@@ -22,7 +23,8 @@ export const BENCHMARKS: Record<MetricKey, Threshold> = {
   saveRate:        { weakBelow: 0.3, strongAbove: 0.6, weight: 3, label: "저장율" },
   likeRate:        { weakBelow: 1.5, strongAbove: 3, weight: 1, label: "좋아요율" },
   commentRate:     { weakBelow: 0.1, strongAbove: 0.3, weight: 2, label: "댓글율" },
-  followRate:      { weakBelow: 0.4, strongAbove: 0.8, weight: 4, label: "팔로우 전환율" },
+  followRate:       { weakBelow: 0.4, strongAbove: 0.8, weight: 4, label: "팔로우 전환율" },
+  nonFollowerReach: { weakBelow: 60, strongAbove: 80, weight: 3, label: "논팔로워 도달" },
 };
 
 export const DROP_THRESHOLD_PCT_PER_SEC = 8; // 잔존곡선 급락 플래그 기준 (%p/초)

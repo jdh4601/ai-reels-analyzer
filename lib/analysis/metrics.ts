@@ -6,7 +6,7 @@ function rate(numerator: number, denominator: number): number {
 }
 
 export function computeDerivedRates(reel: Reel): DerivedRates {
-  const { views, likes, comments, saves, shares, avgWatchTimeSec, durationSec } = reel;
+  const { views, likes, comments, saves, shares, avgWatchTimeSec, durationSec, reach } = reel;
   const engagementCount = likes + comments + saves + shares;
 
   const derived: DerivedRates = {
@@ -20,6 +20,10 @@ export function computeDerivedRates(reel: Reel): DerivedRates {
 
   if (reel.followsFromReel !== undefined) {
     derived.followRate = rate(reel.followsFromReel, views);
+    derived.followConversionRate = rate(reel.followsFromReel, reach);
+  }
+  if (reel.profileVisits !== undefined) {
+    derived.profileVisitRate = rate(reel.profileVisits, reach);
   }
   return derived;
 }

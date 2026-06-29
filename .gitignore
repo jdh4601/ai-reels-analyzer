@@ -1,9 +1,13 @@
 node_modules/
 .next/
 data/
+.env
 .env.local
+.env*.local
 *.pem
 *.key
+credentials.json
+!.env.example
 .DS_Store
 
 next-env.d.ts

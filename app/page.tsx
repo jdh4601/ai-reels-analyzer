@@ -3,13 +3,17 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { Reel, AccountSnapshot, AccountProfile } from "@/lib/schemas";
 import { buildAccountOverview } from "@/lib/analysis/accountOverview";
 import { latestFollowerDelta } from "@/lib/analysis/followerTrend";
+import { diagnoseRecent } from "@/lib/analysis/recentDiagnosis";
+import { computeDashboardMetrics } from "@/lib/analysis/dashboardMetrics";
 import { AppBar } from "@/components/AppBar";
 import { AccountHeader } from "@/components/AccountHeader";
 import { AccountOverview } from "@/components/AccountOverview";
 import { Input, Button } from "@/components/ui";
-import { ReelPicker } from "@/components/ReelPicker";
+import { ReelList } from "@/components/ReelList";
 import { FollowerGrowthChart } from "@/components/FollowerGrowthChart";
-import { GrowthTrend } from "@/components/GrowthTrend";
+import { EngagementPieChart } from "@/components/EngagementPieChart";
+import { RecentInsightCards } from "@/components/RecentInsightCards";
+import { DashboardMetrics } from "@/components/DashboardMetrics";
 
 export default function Page() {
   const [reels, setReels] = useState<Reel[]>([]);
@@ -77,6 +81,8 @@ export default function Page() {
 
   const overview = buildAccountOverview(reels, snapshots, profile);
   const followerDelta = latestFollowerDelta(snapshots);
+  const recent = diagnoseRecent(reels);
+  const dashboardMetrics = computeDashboardMetrics(reels);
 
   return (
     <>
@@ -85,12 +91,21 @@ export default function Page() {
         <AccountHeader profile={profile} followerDelta={followerDelta} />
         <AccountOverview overview={overview} />
 
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold text-neutral-700">릴스 — 카드를 클릭하면 상세 분석</h2>
-          <ReelPicker reels={reels} />
+        <RecentInsightCards
+          strengths={recent.strengths}
+          weaknesses={recent.weaknesses}
+          summary={recent.summary}
+        />
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <FollowerGrowthChart snapshots={snapshots} />
+          <EngagementPieChart reels={reels} />
         </div>
 
-        <FollowerGrowthChart snapshots={snapshots} />
+        <DashboardMetrics metrics={dashboardMetrics} />
+
+        <ReelList reels={reels} />
+
         <form onSubmit={addSnapshot} className="flex flex-wrap items-center gap-2 text-sm">
           <Input type="date" value={snapDate} onChange={(e) => setSnapDate(e.target.value)} />
           <Input
@@ -102,8 +117,6 @@ export default function Page() {
           />
           <Button type="submit">스냅샷 추가</Button>
         </form>
-
-        <GrowthTrend reels={reels} />
       </main>
 
       {syncStatus && (

@@ -6,6 +6,7 @@ import { getVisionModel } from "@/lib/llm";
 const BodySchema = z.object({
   imageBase64: z.string().min(1),
   mediaType: z.enum(["image/png", "image/jpeg", "image/webp"]),
+  imageType: z.enum(["edit", "audience", "watchTime"]).default("edit"),
 });
 
 export async function POST(req: Request) {
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   }
   try {
     const model = await getVisionModel();
-    const result = await parseScreenshot(parsed.data.imageBase64, parsed.data.mediaType, model);
+    const result = await parseScreenshot(parsed.data.imageBase64, parsed.data.mediaType, model, parsed.data.imageType);
     return NextResponse.json(result);
   } catch (err) {
     const message = err instanceof Error ? err.message : "파싱 실패";

@@ -34,3 +34,19 @@ test("views가 0이면 모든 비율 0 (0 나눗셈 방어)", () => {
   expect(d.shareRate).toBe(0);
   expect(d.engagementRate).toBe(0);
 });
+
+test("팔로우 전환율(followConversionRate) = followsFromReel / reach × 100", () => {
+  const r = { ...base, followsFromReel: 45 };
+  expect(computeDerivedRates(r).followConversionRate).toBeCloseTo(0.5, 5);
+});
+
+test("프로필 방문률(profileVisitRate) = profileVisits / reach × 100", () => {
+  const r = { ...base, profileVisits: 180 };
+  expect(computeDerivedRates(r).profileVisitRate).toBeCloseTo(2, 5);
+});
+
+test("followsFromReel, profileVisits 누락 시 해당 derived 필드는 undefined", () => {
+  const d = computeDerivedRates(base);
+  expect(d.followConversionRate).toBeUndefined();
+  expect(d.profileVisitRate).toBeUndefined();
+});

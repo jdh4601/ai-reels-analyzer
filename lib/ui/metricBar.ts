@@ -1,4 +1,5 @@
 import type { Threshold } from "@/config/benchmarks";
+import type { MetricVerdict } from "@/lib/analysis/diagnosis";
 
 export interface MetricBarGeometry {
   axisMax: number;
@@ -19,4 +20,10 @@ export function metricBarGeometry(value: number, t: Threshold): MetricBarGeometr
   const strongPct = 100 - strongStart;
   const markerPct = Math.max(0, Math.min(100, (value / axisMax) * 100));
   return { axisMax, weakPct, okPct, strongPct, markerPct };
+}
+
+// verdict가 band를 만든 임계값(threshold)으로 막대를 그린다.
+// 라벨(band)과 마커가 항상 같은 자를 쓰게 보장 — MetricBars는 이 함수만 호출할 것.
+export function verdictBarGeometry(v: MetricVerdict): MetricBarGeometry {
+  return metricBarGeometry(v.value, v.threshold);
 }

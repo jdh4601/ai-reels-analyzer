@@ -1,0 +1,14 @@
+node_modules
+.next
+data
+.git
+.env.local
+.env
+*.pem
+*.key
+.DS_Store
+*.tsbuildinfo
+__tests__
+jest.config.js
+jest.setup.ts
+coverage

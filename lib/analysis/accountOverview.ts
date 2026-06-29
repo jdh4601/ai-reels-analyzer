@@ -1,5 +1,6 @@
 import type { Reel, AccountSnapshot, AccountProfile } from "@/lib/schemas";
 import { sortByDate, latestFollowerDelta } from "@/lib/analysis/followerTrend";
+import { averagePostHookRetention } from "@/lib/analysis/postHookRetention";
 
 export interface AccountOverview {
   followers: number;
@@ -7,6 +8,7 @@ export interface AccountOverview {
   reachLast7d: number;
   reelCount: number;
   avgEngagementRate: number;
+  avgPostHookRetention: number | null;
 }
 
 // 상단 계정 개요 카드용 집계. 프로필 우선, 없으면 스냅샷/릴스에서 추론.
@@ -33,5 +35,6 @@ export function buildAccountOverview(
     reachLast7d: latest?.reachLast7d ?? 0,
     reelCount,
     avgEngagementRate,
+    avgPostHookRetention: averagePostHookRetention(reels),
   };
 }

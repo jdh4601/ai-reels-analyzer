@@ -10,6 +10,7 @@ export interface MetricVerdict {
   value: number;
   band: Band;
   priorityScore: number;
+  threshold: Threshold; // band를 만든 임계값 — 시각화(마커)가 라벨과 같은 자를 쓰게 함
 }
 
 export interface Diagnosis {
@@ -37,6 +38,7 @@ function metricValues(reel: Reel): Partial<Record<MetricKey, number>> {
     likeRate: d.likeRate,
     commentRate: d.commentRate,
     followRate: d.followRate,
+    nonFollowerReach: reel.audienceBreakdown?.nonFollowersPct,
   };
 }
 
@@ -63,6 +65,7 @@ export function diagnose(
       value,
       band,
       priorityScore: band === "weak" ? priorityScore(value, t) : 0,
+      threshold: t,
     });
   }
 

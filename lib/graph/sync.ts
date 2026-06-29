@@ -17,13 +17,19 @@ export interface SyncResult {
 // API 집계 수치만 갱신한다.
 function mergeWithExisting(mapped: Reel, existing: Reel | null): Reel {
   if (!existing) return mapped;
+  const hookFromSkip = existing.hookRetention3s ??
+    (existing.skipRate != null ? 100 - existing.skipRate : undefined);
   return {
     ...mapped,
     durationSec: existing.durationSec || mapped.durationSec,
-    hookRetention3s: existing.hookRetention3s,
+    hookRetention3s: hookFromSkip,
+    skipRate: existing.skipRate,
     retentionCurve: existing.retentionCurve,
     reachSources: existing.reachSources,
+    audienceBreakdown: existing.audienceBreakdown,
+    watchTimeBuckets: existing.watchTimeBuckets,
     followsFromReel: existing.followsFromReel,
+    profileVisits: existing.profileVisits,
     transcript: existing.transcript,
     caption: mapped.caption ?? existing.caption,
   };
