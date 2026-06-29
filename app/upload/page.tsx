@@ -1,6 +1,8 @@
 "use client";
-import { useState, type ChangeEvent, type DragEvent } from "react";
+import { Suspense, useState, type ChangeEvent, type DragEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { ImagePlus, ArrowLeft, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import type { ScreenshotParse } from "@/lib/schemas";
 import { Card, CardBody, Input, Button } from "@/components/ui";
 
 async function fileToBase64(file: File): Promise<string> {
@@ -13,12 +15,23 @@ async function fileToBase64(file: File): Promise<string> {
 
 type State = "idle" | "parsing" | "done" | "error";
 
-export default function UploadPage() {
-  const [reelId, setReelId] = useState("");
+function parsedSummary(p: ScreenshotParse): string {
+  const bits: string[] = [];
+  if (typeof p.hookRetention3s === "number") bits.push(`3초 훅 ${p.hookRetention3s}%`);
+  if (p.retentionCurve?.length) bits.push(`잔존 곡선 ${p.retentionCurve.length}포인트`);
+  if (p.reachSources) bits.push("유입 소스");
+  return bits.length ? `저장됨 — ${bits.join(" · ")}` : "저장됨 (추출된 지표 없음)";
+}
+
+function UploadInner() {
+  const search = useSearchParams();
+  const [reelId, setReelId] = useState(search.get("reelId") ?? "");
   const [preview, setPreview] = useState<string | null>(null);
   const [state, setState] = useState<State>("idle");
   const [message, setMessage] = useState("");
   const [dragging, setDragging] = useState(false);
+
+  const lockedReel = !!search.get("reelId");
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
@@ -32,19 +45,19 @@ export default function UploadPage() {
     setMessage("Vision 파싱 중…");
     try {
       const imageBase64 = await fileToBase64(file);
-      const res = await fetch("/api/parse-screenshot", {
+      const res = await fetch(`/api/reels/${encodeURIComponent(reelId)}/screenshot`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ imageBase64, mediaType: file.type }),
       });
+      const data = await res.json();
       if (!res.ok) {
         setState("error");
-        setMessage("파싱 실패: " + (await res.text()));
+        setMessage(typeof data.error === "string" ? data.error : "파싱 실패");
         return;
       }
-      const parsed = await res.json();
       setState("done");
-      setMessage("파싱 완료: " + JSON.stringify(parsed));
+      setMessage(parsedSummary(data.parsed as ScreenshotParse));
     } catch {
       setState("error");
       setMessage("네트워크 오류");
@@ -79,8 +92,12 @@ export default function UploadPage() {
             className="w-full"
             placeholder="예: interview-12"
             value={reelId}
+            readOnly={lockedReel}
             onChange={(e) => setReelId(e.target.value)}
           />
+          {lockedReel && (
+            <p className="-mt-1 text-xs text-neutral-400">QR로 지정된 릴스에 업로드합니다.</p>
+          )}
 
           <label
             onDragOver={(e) => {
@@ -139,5 +156,13 @@ export default function UploadPage() {
         </CardBody>
       </Card>
     </main>
+  );
+}
+
+export default function UploadPage() {
+  return (
+    <Suspense fallback={<main className="p-5 text-sm text-neutral-500">불러오는 중…</main>}>
+      <UploadInner />
+    </Suspense>
   );
 }

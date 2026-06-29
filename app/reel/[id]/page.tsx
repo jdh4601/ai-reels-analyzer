@@ -12,6 +12,7 @@ import { DiagnosisCards } from "@/components/DiagnosisCards";
 import { MetricBars } from "@/components/MetricBars";
 import { RetentionChart } from "@/components/RetentionChart";
 import { ReelMetricTrend } from "@/components/ReelMetricTrend";
+import { ScreenshotUploadCard } from "@/components/ScreenshotUploadCard";
 import { SolutionsPanel } from "@/components/SolutionsPanel";
 import { AiGenerationPanel } from "@/components/AiGenerationPanel";
 
@@ -110,6 +111,7 @@ function ReelDetail({ reel, analysis, metricHistory }: DetailResponse) {
       <BottleneckBanner bottleneck={analysis.diagnosis.bottleneck} delta={analysis.bottleneckDelta} />
       <ReelMetricTrend history={metricHistory} />
       <RetentionChart curve={reel.retentionCurve ?? []} drops={analysis.drops} />
+      <ScreenshotUploadCard reelId={reel.id} />
       <DiagnosisCards
         strengths={analysis.diagnosis.strengths}
         weaknesses={analysis.diagnosis.weaknesses}
