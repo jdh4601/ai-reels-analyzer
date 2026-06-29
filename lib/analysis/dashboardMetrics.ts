@@ -9,10 +9,11 @@ export interface ReelMetricPoint {
   title: string;
   avgWatchTimeSec: number;
   durationSec: number;
-  completionRate: number;
+  // 결손은 0이 아니라 null — 차트에서 갭으로 그려 "데이터없음"과 "0"을 구분한다
+  completionRate: number | null;
   skipRate: number | null;
-  followConversionRate: number;
-  profileVisitRate: number;
+  followConversionRate: number | null;
+  profileVisitRate: number | null;
 }
 
 export interface HighSkipReel {
@@ -67,17 +68,19 @@ export function computeDashboardMetrics(reels: Reel[]): DashboardMetrics {
       title: reelTitle(r),
       avgWatchTimeSec: r.avgWatchTimeSec,
       durationSec: r.durationSec,
-      completionRate: r.durationSec > 0 ? d.completionRate : 0,
+      completionRate: r.durationSec > 0 ? d.completionRate : null,
       skipRate,
-      followConversionRate: d.followConversionRate ?? 0,
-      profileVisitRate: d.profileVisitRate ?? 0,
+      followConversionRate: r.followsFromReel !== undefined ? (d.followConversionRate ?? 0) : null,
+      profileVisitRate: r.profileVisits !== undefined ? (d.profileVisitRate ?? 0) : null,
     };
   });
 
   const avgWatchTimeSec = average(series.map((s) => s.avgWatchTimeSec));
   const durationSeries = series.filter((s) => s.durationSec > 0);
   const completionRate = average(
-    durationSeries.map((s) => s.completionRate),
+    durationSeries
+      .map((s) => s.completionRate)
+      .filter((v): v is number => v !== null),
   );
   const avgDurationSec = average(durationSeries.map((s) => s.durationSec));
   const skipRate = average(
@@ -107,12 +110,12 @@ export function computeDashboardMetrics(reels: Reel[]): DashboardMetrics {
 
   const topFollowConversionReels: TopFollowReel[] = series
     .filter((s) => sorted[s.idx - 1].followsFromReel !== undefined)
-    .sort((a, b) => b.followConversionRate - a.followConversionRate)
+    .sort((a, b) => (b.followConversionRate ?? 0) - (a.followConversionRate ?? 0))
     .slice(0, 5)
     .map((s) => ({
       idx: s.idx,
       title: s.title,
-      rate: s.followConversionRate,
+      rate: s.followConversionRate ?? 0,
       follows: sorted[s.idx - 1].followsFromReel ?? 0,
       reach: sorted[s.idx - 1].reach,
     }));

@@ -106,7 +106,7 @@ function ReelDetail({ reel, analysis, metricHistory }: DetailResponse) {
         <Stat label="공유" value={fmtCount(reel.shares)} icon={<Share2 size={16} />} />
         <Stat label="평균 시청" value={`${reel.avgWatchTimeSec.toFixed(1)}초`} icon={<Clock size={16} />} />
         {typeof reel.followsFromReel === "number" && (
-          <Stat label="릴스發 팔로우" value={fmtCount(reel.followsFromReel)} icon={<Users size={16} />} />
+          <Stat label="이 릴스로 팔로우" value={fmtCount(reel.followsFromReel)} icon={<Users size={16} />} />
         )}
       </div>
 

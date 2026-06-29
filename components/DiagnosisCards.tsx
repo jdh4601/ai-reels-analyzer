@@ -17,13 +17,16 @@ interface ListProps {
 }
 
 function List({ title, items, icon, tone, valueTone, emptyCopy }: ListProps) {
+  const isEmpty = items.length === 0;
+  // 비었을 땐 강한 색(빨강/초록) 박스 대신 중립 톤으로 축소 — 빈 박스가 시선 끌지 않게
+  const boxTone = isEmpty ? "border-neutral-200 bg-neutral-50" : tone;
   return (
-    <div className={`rounded-card border p-4 ${tone}`}>
-      <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+    <div className={`rounded-card border p-4 ${boxTone}`}>
+      <h3 className={`mb-2 flex items-center gap-1.5 text-sm font-semibold ${isEmpty ? "text-neutral-400" : ""}`}>
         {icon}
         {title}
       </h3>
-      {items.length === 0 ? (
+      {isEmpty ? (
         <p className="text-sm text-neutral-400">{emptyCopy}</p>
       ) : (
         <ul className="space-y-1.5 text-sm">

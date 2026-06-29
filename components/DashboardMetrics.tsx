@@ -54,17 +54,17 @@ export function DashboardMetrics({ metrics }: Props) {
 function DashboardMetricsKpiCards({ metrics }: Props) {
   const completionHint =
     metrics.completionRate === null
-      ? "길이 정보가 없는 릴스가 포함됨"
+      ? "일부 릴스의 영상 길이를 몰라 완시율에서 제외됐어요"
       : undefined;
 
   const watchTimeHint =
     metrics.avgWatchTimeSec === null || metrics.avgDurationSec === null
-      ? "길이 정보가 부족해 상대적 해석 불가"
+      ? "영상 길이를 몰라 비교가 어려워요 — 업로드 시 길이를 입력해 주세요"
       : `${Math.round(metrics.avgDurationSec)}초 영상 중 평균 ${fmtSec(metrics.avgWatchTimeSec)} 시청`;
 
   const skipHint =
     metrics.skipRate === null
-      ? "Skip Rate 데이터 없음"
+      ? "스크린샷을 업로드하면 채워져요"
       : `${100 - BENCHMARKS.hookRetention3s.weakBelow}% 초과 이탈 심함`;
 
   return (
@@ -169,6 +169,7 @@ function WatchTimeCompletionChart({
                 stroke="#16a34a"
                 strokeWidth={2}
                 dot={{ r: 3 }}
+                connectNulls={false}
               />
               <ReferenceLine
                 yAxisId="right"
@@ -197,7 +198,8 @@ function SkipRateChart({
   series: Metrics["series"];
   highSkipReels: Metrics["highSkipReels"];
 }) {
-  const data = series.map((s) => ({ ...s, skip: s.skipRate ?? 0 }));
+  // 결손은 null 유지 → 차트에서 갭(데이터없음)으로 그린다. 0으로 채우면 거짓 급락처럼 보임
+  const data = series.map((s) => ({ ...s, skip: s.skipRate }));
   const skipWeakAbove = 100 - BENCHMARKS.hookRetention3s.weakBelow;
 
   return (
@@ -237,6 +239,7 @@ function SkipRateChart({
                   stroke="#f59e0b"
                   strokeWidth={2}
                   fill="url(#skipFill)"
+                  connectNulls={false}
                 />
                 {highSkipReels.map((r) => (
                   <ReferenceDot

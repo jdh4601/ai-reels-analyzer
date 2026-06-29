@@ -97,3 +97,23 @@ test("길이 정보 없으면 완시율 집계에서 제외", () => {
   const m = computeDashboardMetrics([reels[0], r]);
   expect(m.completionRate).toBeCloseTo((22 / 30) * 100, 5);
 });
+
+// 0 vs 데이터없음: 결손값은 0이 아니라 null(차트 갭)이어야 한다
+test("길이 모르는 릴스의 series 완시율은 0이 아니라 null", () => {
+  const r = reel({ id: "c", durationSec: 0, views: 1000, reach: 900, avgWatchTimeSec: 10 });
+  const m = computeDashboardMetrics([r]);
+  expect(m.series[0].completionRate).toBeNull();
+});
+
+test("팔로우/프로필 데이터 없는 릴스의 series 값은 null", () => {
+  const r = reel({ id: "c", durationSec: 30, views: 1000, reach: 900, avgWatchTimeSec: 10 });
+  const m = computeDashboardMetrics([r]);
+  expect(m.series[0].followConversionRate).toBeNull();
+  expect(m.series[0].profileVisitRate).toBeNull();
+});
+
+test("skip 데이터(skipRate·hook 모두) 없는 릴스의 series skipRate는 null", () => {
+  const r = reel({ id: "c", durationSec: 30, views: 1000, reach: 900, avgWatchTimeSec: 10 });
+  const m = computeDashboardMetrics([r]);
+  expect(m.series[0].skipRate).toBeNull();
+});
