@@ -7,6 +7,7 @@ import { latestFollowerDelta } from "@/lib/analysis/followerTrend";
 import { AppBar } from "@/components/AppBar";
 import { AccountHeader } from "@/components/AccountHeader";
 import { AccountOverview } from "@/components/AccountOverview";
+import { Input, Button } from "@/components/ui";
 import { ReelPicker } from "@/components/ReelPicker";
 import { FollowerGrowthChart } from "@/components/FollowerGrowthChart";
 import { BottleneckBanner } from "@/components/BottleneckBanner";
@@ -108,24 +109,21 @@ export default function Page() {
         <ReelPicker reels={reels} selectedId={selectedId} onSelect={setSelectedId} />
 
         <FollowerGrowthChart snapshots={snapshots} />
-      <form onSubmit={addSnapshot} className="flex gap-2 items-center text-sm">
-        <input
-          type="date"
-          className="border rounded px-2 py-1"
-          value={snapDate}
-          onChange={(e) => setSnapDate(e.target.value)}
-        />
-        <input
-          type="number"
-          placeholder="팔로워 수"
-          className="border rounded px-2 py-1 w-32"
-          value={snapFollowers}
-          onChange={(e) => setSnapFollowers(e.target.value)}
-        />
-        <button type="submit" className="border rounded px-3 py-1 bg-neutral-100 hover:bg-neutral-200">
-          스냅샷 추가
-        </button>
-      </form>
+        <form onSubmit={addSnapshot} className="flex flex-wrap items-center gap-2 text-sm">
+          <Input
+            type="date"
+            value={snapDate}
+            onChange={(e) => setSnapDate(e.target.value)}
+          />
+          <Input
+            type="number"
+            placeholder="팔로워 수"
+            className="w-32"
+            value={snapFollowers}
+            onChange={(e) => setSnapFollowers(e.target.value)}
+          />
+          <Button type="submit">스냅샷 추가</Button>
+        </form>
 
       {analysis && selected && (
         <>

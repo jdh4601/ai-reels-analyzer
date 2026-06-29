@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
+import { Settings as SettingsIcon, ArrowLeft, Camera } from "lucide-react";
+import { Button } from "@/components/ui";
 
 type ProviderId = "anthropic" | "openai" | "kimi" | "gemini";
 
@@ -71,9 +73,11 @@ export default function SettingsPage() {
   return (
     <main className="max-w-2xl mx-auto p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">⚙️ LLM 제공자 설정</h1>
-        <a href="/" className="text-sm text-blue-600 underline">
-          ← 대시보드
+        <h1 className="flex items-center gap-2 text-xl font-bold text-neutral-900">
+          <SettingsIcon size={20} className="text-brand-600" /> LLM 제공자 설정
+        </h1>
+        <a href="/" className="inline-flex items-center gap-1 text-sm text-brand-600 hover:underline">
+          <ArrowLeft size={14} /> 대시보드
         </a>
       </div>
       <p className="text-sm text-neutral-500">
@@ -114,8 +118,10 @@ export default function SettingsPage() {
           );
         })}
 
-        <div className="rounded-lg border border-pink-200 bg-pink-50/40 p-4 space-y-2">
-          <h2 className="font-semibold">📷 Instagram 연동 (Phase 2 자동 수집)</h2>
+        <div className="rounded-card border border-brand-200 bg-brand-50/40 p-4 space-y-2">
+          <h2 className="flex items-center gap-1.5 font-semibold">
+            <Camera size={16} className="text-brand-600" /> Instagram 연동 (자동 수집)
+          </h2>
           <p className="text-xs text-neutral-500">
             Meta 개발자 앱에서 발급한 Instagram 액세스 토큰을 붙여넣으세요. 대시보드의
             "Instagram 동기화"로 릴스 집계 지표·팔로워 수가 자동 갱신됩니다.
@@ -137,9 +143,9 @@ export default function SettingsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <button type="submit" className="border rounded px-4 py-2 bg-neutral-900 text-white hover:bg-neutral-700">
+          <Button type="submit" variant="primary">
             저장
-          </button>
+          </Button>
           {status && <span className="text-sm text-neutral-600">{status}</span>}
         </div>
       </form>
