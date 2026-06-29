@@ -27,8 +27,9 @@ function systemPrompt(type: ImageType): string {
     default:
       return `${BASE_INSTRUCTION}
 이 스크린샷은 Instagram/EDIT 인사이트 스크린샷이다.
+EDIT 화면 상단의 3초 훅 숫자는 "잔존율"이 아니라 "스킵/이탈률"이다(예: 3초 안에 넘긴 비율). 그 값은 skipRate로 넣어라. 3초 후 잔존율은 시스템이 100 - skipRate로 계산하므로 직접 넣지 마라.
 추출 필드:
-- hookRetention3s: 3초 시점 잔존율(%) 숫자
+- skipRate: 3초 시점 스킵/이탈률(%) 숫자 (화면의 3초 훅 대표 수치)
 - retentionCurve: 잔존 곡선 좌표 배열 [{sec, pct}], 곡선이 안 보이면 생략
 - reachSources: 유입 소스 비율 {reelsTab, explore, home, profile, other}(%) — 보이는 것만`;
   }
