@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, ExternalLink, Film, Eye, Users, Heart, MessageCircle, Bookmark, Share2, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, ExternalLink, Film, Eye, Users, Heart, MessageCircle, Bookmark, Share2, Clock } from "lucide-react";
 import type { Reel, ReelMetricSnapshot } from "@/lib/schemas";
 import type { AnalyzeResult } from "@/lib/analysis/analyze";
 import type { ReelKpiDeltas, ReelKpiKey } from "@/lib/analysis/reelKpiDeltas";
@@ -15,16 +15,23 @@ import { RetentionChart } from "@/components/RetentionChart";
 import { ReelMetricTrend } from "@/components/ReelMetricTrend";
 import { ScreenshotUploadCard } from "@/components/ScreenshotUploadCard";
 import { SrtUploadCard } from "@/components/SrtUploadCard";
+import { ReachSourcesCard } from "@/components/ReachSourcesCard";
 import { AudienceBreakdownCard } from "@/components/AudienceBreakdownCard";
 import { WatchTimeBucketsChart } from "@/components/WatchTimeBucketsChart";
 import { SolutionsPanel } from "@/components/SolutionsPanel";
 import { AiGenerationPanel } from "@/components/AiGenerationPanel";
+
+interface ReelNav {
+  prevId: string | null;
+  nextId: string | null;
+}
 
 interface DetailResponse {
   reel: Reel;
   analysis: AnalyzeResult;
   metricHistory: ReelMetricSnapshot[];
   kpiDeltas?: ReelKpiDeltas;
+  nav?: ReelNav;
 }
 
 // 평균 대비 변화율 힌트: +12% 초록 / -8% 빨강 / 데이터 없으면 표시 안 함
@@ -80,15 +87,35 @@ export default function ReelDetailPage() {
         </div>
       )}
 
-      {data && <ReelDetail {...data} onChange={load} />}
+      {data && <ReelDetail key={id} {...data} onChange={load} />}
     </main>
   );
 }
 
-function ReelDetail({ reel, analysis, metricHistory, kpiDeltas, onChange }: DetailResponse & { onChange: () => void }) {
+function ReelDetail({ reel, analysis, metricHistory, kpiDeltas, nav, onChange }: DetailResponse & { onChange: () => void }) {
   const delta = (key: ReelKpiKey) => <DeltaHint pct={kpiDeltas?.[key]} />;
   return (
     <>
+      {/* 이전·다음 릴스 이동 */}
+      {(nav?.prevId || nav?.nextId) && (
+        <div className="flex items-center justify-between text-sm">
+          {nav?.prevId ? (
+            <a href={`/reel/${nav.prevId}`} className="inline-flex items-center gap-1 text-neutral-600 hover:text-brand-600">
+              <ArrowLeft size={14} /> 이전 릴스
+            </a>
+          ) : (
+            <span />
+          )}
+          {nav?.nextId ? (
+            <a href={`/reel/${nav.nextId}`} className="inline-flex items-center gap-1 text-neutral-600 hover:text-brand-600">
+              다음 릴스 <ArrowRight size={14} />
+            </a>
+          ) : (
+            <span />
+          )}
+        </div>
+      )}
+
       {/* 헤더 */}
       <div className="flex gap-4">
         <div className="relative aspect-[9/16] w-24 shrink-0 overflow-hidden rounded-card border border-border-subtle bg-neutral-100">
@@ -116,6 +143,13 @@ function ReelDetail({ reel, analysis, metricHistory, kpiDeltas, onChange }: Deta
           )}
         </div>
       </div>
+
+      {/* 캡션 원문 */}
+      {reel.caption && (
+        <p className="whitespace-pre-line rounded-card border border-border-subtle bg-surface-muted/50 p-3 text-sm leading-relaxed text-neutral-700">
+          {reel.caption}
+        </p>
+      )}
 
       {/* 전체 지표 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -147,6 +181,7 @@ function ReelDetail({ reel, analysis, metricHistory, kpiDeltas, onChange }: Deta
       <RetentionChart curve={reel.retentionCurve ?? []} drops={analysis.drops} />
       <SrtUploadCard reelId={reel.id} analysis={analysis.transcript} onChange={onChange} />
       <AudienceBreakdownCard breakdown={reel.audienceBreakdown} />
+      <ReachSourcesCard sources={reel.reachSources} />
       <WatchTimeBucketsChart buckets={reel.watchTimeBuckets} />
       <ScreenshotUploadCard reelId={reel.id} />
       <DiagnosisCards
