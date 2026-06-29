@@ -133,13 +133,11 @@ export default function Page() {
             bottleneck={analysis.diagnosis.bottleneck}
             delta={analysis.bottleneckDelta}
           />
-          <div className="grid grid-cols-2 gap-3">
-            <DiagnosisCards
-              strengths={analysis.diagnosis.strengths}
-              weaknesses={analysis.diagnosis.weaknesses}
-            />
-            <MetricBars verdicts={analysis.diagnosis.verdicts} />
-          </div>
+          <DiagnosisCards
+            strengths={analysis.diagnosis.strengths}
+            weaknesses={analysis.diagnosis.weaknesses}
+          />
+          <MetricBars verdicts={analysis.diagnosis.verdicts} />
           <RetentionChart curve={selected.retentionCurve ?? []} drops={analysis.drops} />
           <GrowthTrend reels={reels} />
           <SolutionsPanel prescriptions={analysis.prescriptions} />
