@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ArrowLeft, ExternalLink, Film, Eye, Users, Heart, MessageCircle, Bookmark, Share2, Clock } from "lucide-react";
 import type { Reel, ReelMetricSnapshot } from "@/lib/schemas";
@@ -14,6 +14,7 @@ import { MetricBars } from "@/components/MetricBars";
 import { RetentionChart } from "@/components/RetentionChart";
 import { ReelMetricTrend } from "@/components/ReelMetricTrend";
 import { ScreenshotUploadCard } from "@/components/ScreenshotUploadCard";
+import { SrtUploadCard } from "@/components/SrtUploadCard";
 import { AudienceBreakdownCard } from "@/components/AudienceBreakdownCard";
 import { WatchTimeBucketsChart } from "@/components/WatchTimeBucketsChart";
 import { SolutionsPanel } from "@/components/SolutionsPanel";
@@ -45,19 +46,23 @@ export default function ReelDetailPage() {
   const [data, setData] = useState<DetailResponse | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!id) return;
-    fetch(`/api/reels/${id}`)
-      .then(async (r) => {
-        if (!r.ok) {
-          setError((await r.json()).error ?? "불러오기 실패");
-          return null;
-        }
-        return r.json();
-      })
-      .then((d) => d && setData(d))
-      .catch(() => setError("네트워크 오류"));
+    try {
+      const r = await fetch(`/api/reels/${id}`);
+      if (!r.ok) {
+        setError((await r.json()).error ?? "불러오기 실패");
+        return;
+      }
+      setData(await r.json());
+    } catch {
+      setError("네트워크 오류");
+    }
   }, [id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <main className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
@@ -75,12 +80,12 @@ export default function ReelDetailPage() {
         </div>
       )}
 
-      {data && <ReelDetail {...data} />}
+      {data && <ReelDetail {...data} onChange={load} />}
     </main>
   );
 }
 
-function ReelDetail({ reel, analysis, metricHistory, kpiDeltas }: DetailResponse) {
+function ReelDetail({ reel, analysis, metricHistory, kpiDeltas, onChange }: DetailResponse & { onChange: () => void }) {
   const delta = (key: ReelKpiKey) => <DeltaHint pct={kpiDeltas?.[key]} />;
   return (
     <>
@@ -140,6 +145,7 @@ function ReelDetail({ reel, analysis, metricHistory, kpiDeltas }: DetailResponse
       <BottleneckBanner bottleneck={analysis.diagnosis.bottleneck} delta={analysis.bottleneckDelta} />
       <ReelMetricTrend history={metricHistory} />
       <RetentionChart curve={reel.retentionCurve ?? []} drops={analysis.drops} />
+      <SrtUploadCard reelId={reel.id} analysis={analysis.transcript} onChange={onChange} />
       <AudienceBreakdownCard breakdown={reel.audienceBreakdown} />
       <WatchTimeBucketsChart buckets={reel.watchTimeBuckets} />
       <ScreenshotUploadCard reelId={reel.id} />
