@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getRepository, getAccountRepository, getProfileRepository } from "@/lib/store";
+import {
+  getRepository,
+  getAccountRepository,
+  getProfileRepository,
+  getReelHistoryRepository,
+} from "@/lib/store";
 import { getInstagramClient } from "@/lib/graph";
 import { syncFromGraph } from "@/lib/graph/sync";
 
@@ -13,6 +18,7 @@ export async function POST() {
       getAccountRepository(),
       today,
       getProfileRepository(),
+      getReelHistoryRepository(),
     );
     return NextResponse.json(result);
   } catch (err) {

@@ -56,6 +56,19 @@ export const ReelSchema = z.object({
 });
 export type Reel = z.infer<typeof ReelSchema>;
 
+// 릴스별 지표 이력 (동기화마다 누적 → 조회수/도달 추이)
+export const ReelMetricSnapshotSchema = z.object({
+  reelId: z.string().min(1),
+  date: z.string(), // YYYY-MM-DD
+  views: z.number().nonnegative(),
+  reach: z.number().nonnegative(),
+  likes: z.number().nonnegative(),
+  comments: z.number().nonnegative(),
+  saves: z.number().nonnegative(),
+  shares: z.number().nonnegative(),
+});
+export type ReelMetricSnapshot = z.infer<typeof ReelMetricSnapshotSchema>;
+
 // 계정 프로필 (Graph getProfile + 동기화 저장)
 export const AccountProfileSchema = z.object({
   username: z.string(),

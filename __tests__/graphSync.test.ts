@@ -5,6 +5,7 @@ import { syncFromGraph } from "@/lib/graph/sync";
 import { createJsonReelRepository } from "@/lib/store/reelRepository";
 import { createJsonAccountRepository } from "@/lib/store/accountRepository";
 import { createJsonProfileRepository } from "@/lib/store/profileRepository";
+import { createJsonReelHistoryRepository } from "@/lib/store/reelHistoryRepository";
 import type { GraphClient } from "@/lib/graph/client";
 import type { Reel } from "@/lib/schemas";
 
@@ -53,6 +54,18 @@ test("동기화는 집계 수치를 갱신하고 스샷 데이터(훅·길이·�
   expect(result.syncedReels).toBe(1);
   const snaps = await accountRepo.list();
   expect(snaps[0]).toMatchObject({ date: "2026-06-29", followerCount: 1500 });
+});
+
+test("이력 저장소가 주어지면 동기화 시점 지표를 누적한다", async () => {
+  const reels = createJsonReelRepository(tmpDir());
+  const accounts = createJsonAccountRepository(tmpDir());
+  const history = createJsonReelHistoryRepository(tmpDir());
+
+  await syncFromGraph(fakeClient, reels, accounts, "2026-06-29", undefined, history);
+
+  const h = await history.list("media-1");
+  expect(h).toHaveLength(1);
+  expect(h[0]).toMatchObject({ reelId: "media-1", date: "2026-06-29", views: 12000 });
 });
 
 test("프로필 저장소가 주어지면 계정 프로필을 저장한다", async () => {

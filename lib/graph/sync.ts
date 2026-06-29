@@ -2,6 +2,7 @@ import type { GraphClient } from "@/lib/graph/client";
 import type { ReelRepository } from "@/lib/store/reelRepository";
 import type { AccountRepository } from "@/lib/store/accountRepository";
 import type { ProfileRepository } from "@/lib/store/profileRepository";
+import type { ReelHistoryRepository } from "@/lib/store/reelHistoryRepository";
 import { mapMediaToReel } from "@/lib/graph/map";
 import { computeDerivedRates } from "@/lib/analysis/metrics";
 import type { Reel } from "@/lib/schemas";
@@ -34,6 +35,7 @@ export async function syncFromGraph(
   accountRepo: AccountRepository,
   today: string,
   profileRepo?: ProfileRepository,
+  historyRepo?: ReelHistoryRepository,
 ): Promise<SyncResult> {
   const profile = await client.getProfile();
   const reels = await client.listReels();
@@ -45,6 +47,19 @@ export async function syncFromGraph(
     const existing = await reelRepo.get(mapped.id);
     const merged = mergeWithExisting(mapped, existing);
     await reelRepo.upsert({ ...merged, derived: computeDerivedRates(merged) });
+    // 동기화 시점의 지표를 이력으로 누적(조회수/도달 추이용)
+    if (historyRepo) {
+      await historyRepo.add({
+        reelId: merged.id,
+        date: today,
+        views: merged.views,
+        reach: merged.reach,
+        likes: merged.likes,
+        comments: merged.comments,
+        saves: merged.saves,
+        shares: merged.shares,
+      });
+    }
     synced++;
   }
 
