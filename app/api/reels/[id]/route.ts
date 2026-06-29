@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRepository, getReelHistoryRepository } from "@/lib/store";
 import { analyzeReel } from "@/lib/analysis/analyze";
+import { reelKpiDeltas } from "@/lib/analysis/reelKpiDeltas";
 
 // 릴스 상세: reel + 분석 결과 + 지표 이력
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +15,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .sort((a, b) => a.postedAt.localeCompare(b.postedAt));
   const analysis = analyzeReel(reel, history);
   const metricHistory = await getReelHistoryRepository().list(id);
+  const kpiDeltas = reelKpiDeltas(reel, history);
 
-  return NextResponse.json({ reel, analysis, metricHistory });
+  return NextResponse.json({ reel, analysis, metricHistory, kpiDeltas });
 }
