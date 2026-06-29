@@ -20,3 +20,11 @@ export function fmtDelta(n: number): string {
   const arrow = n > 0 ? "▲" : "▼";
   return `${arrow}${Math.abs(n).toFixed(1)}%p`;
 }
+
+// 큰 수를 만 단위로 축약 (10000 → "1만", 12000 → "1.2만")
+export function fmtCount(n: number): string {
+  if (n < 10000) return n.toLocaleString();
+  const man = n / 10000;
+  const rounded = Math.round(man * 10) / 10;
+  return `${Number.isInteger(rounded) ? rounded : rounded.toFixed(1)}만`;
+}
