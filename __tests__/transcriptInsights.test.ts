@@ -1,0 +1,58 @@
+import {
+  buildTranscriptInsightsPrompt,
+  parseTranscriptInsights,
+  generateTranscriptInsights,
+} from "@/lib/recommend/transcriptInsights";
+import type { Reel } from "@/lib/schemas";
+import type { TextModel } from "@/lib/llm/types";
+
+const reel: Reel = {
+  id: "r1",
+  postedAt: "2026-06-01T00:00:00Z",
+  durationSec: 0,
+  views: 2652,
+  reach: 2046,
+  likes: 50,
+  comments: 8,
+  saves: 9,
+  shares: 17,
+  avgWatchTimeSec: 9.47,
+  skipRate: 68.56,
+  caption: "창업 인터뷰",
+  transcript: [
+    { startSec: 6.2, endSec: 7.4, text: "약간 반항심이었어요" },
+    { startSec: 7.4, endSec: 8.7, text: "지금 공부하는게" },
+  ],
+};
+
+test("buildTranscriptInsightsPrompt는 자막 전문과 지표를 컨텍스트에 담는다", () => {
+  const { system, userText } = buildTranscriptInsightsPrompt(reel);
+  expect(system).toMatch(/JSON/);
+  expect(userText).toContain("약간 반항심이었어요"); // 자막
+  expect(userText).toContain("2652"); // 조회수
+  expect(userText).toMatch(/skip|스킵|68.56/i); // 스킵률
+});
+
+const valid = JSON.stringify({
+  summary: "도입이 느려 초반 이탈이 큽니다.",
+  strengths: [{ title: "진솔한 서사", detail: "솔직한 어조가 공유율 0.6%로 이어짐", metric: "shareRate" }],
+  weaknesses: [{ title: "느린 훅", detail: "6초까지 본론이 안 나와 skip 68.56%", metric: "skipRate" }],
+});
+
+test("parseTranscriptInsights는 코드펜스 JSON을 파싱한다", () => {
+  const fenced = "```json\n" + valid + "\n```";
+  const r = parseTranscriptInsights(fenced);
+  expect(r.weaknesses[0].metric).toBe("skipRate");
+  expect(r.strengths).toHaveLength(1);
+});
+
+test("parseTranscriptInsights는 스키마 위반 시 throw", () => {
+  expect(() => parseTranscriptInsights('{"summary": 123}')).toThrow();
+});
+
+test("generateTranscriptInsights는 모델 출력을 합성한다", async () => {
+  const fakeModel: TextModel = { generate: async () => valid };
+  const r = await generateTranscriptInsights(reel, fakeModel);
+  expect(r.summary).toContain("도입");
+  expect(r.weaknesses[0].title).toBe("느린 훅");
+});

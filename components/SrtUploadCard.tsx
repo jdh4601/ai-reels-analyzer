@@ -1,23 +1,44 @@
 "use client";
 import { useRef, useState } from "react";
-import { Captions, Upload, ThumbsUp, AlertTriangle, Trash2 } from "lucide-react";
+import { Captions, Upload, ThumbsUp, AlertTriangle, Trash2, Sparkles } from "lucide-react";
 import type { TranscriptAnalysis } from "@/lib/analysis/transcriptAnalysis";
+import type { TranscriptInsights } from "@/lib/schemas";
 import { Card, CardHeader, CardBody } from "@/components/ui";
 
 interface Props {
   reelId: string;
   analysis: TranscriptAnalysis;
+  insights?: TranscriptInsights; // 캐시된 LLM 심층 분석
   onChange: () => void; // 업로드/삭제 후 상세 데이터 재요청
 }
 
 // CapCut에서 내보낸 .srt 자막을 올려 잘된 점/아쉬운 점을 지표와 함께 분석한다.
-export function SrtUploadCard({ reelId, analysis, onChange }: Props) {
+export function SrtUploadCard({ reelId, analysis, insights, onChange }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const hasTranscript = analysis.lineCount > 0;
+
+  async function analyzeWithAi() {
+    setAiBusy(true);
+    setAiError("");
+    try {
+      const res = await fetch(`/api/reels/${reelId}/transcript/analyze`, { method: "POST" });
+      if (!res.ok) {
+        setAiError((await res.json()).error ?? "AI 분석 실패");
+        return;
+      }
+      onChange(); // 캐시된 결과를 상세 재요청으로 반영
+    } catch {
+      setAiError("네트워크 오류로 분석하지 못했어요.");
+    } finally {
+      setAiBusy(false);
+    }
+  }
 
   async function uploadFile(file: File) {
     if (!file.name.toLowerCase().endsWith(".srt")) {
@@ -147,10 +168,91 @@ export function SrtUploadCard({ reelId, analysis, onChange }: Props) {
                 emptyCopy="자막 측면의 약점은 없어요."
               />
             </div>
+
+            {/* AI 심층 분석 — 자막 내용 + 지표를 LLM이 함께 보고 원인 진단 */}
+            <div className="space-y-3 border-t border-border-subtle pt-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-sm font-semibold text-neutral-800">
+                  <Sparkles size={15} className="text-brand-600" /> AI 심층 분석
+                </p>
+                <button
+                  onClick={analyzeWithAi}
+                  disabled={aiBusy}
+                  className="inline-flex items-center gap-1.5 rounded-card bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-60"
+                >
+                  <Sparkles size={13} />
+                  {aiBusy ? "분석 중…" : insights ? "다시 분석" : "AI로 분석하기"}
+                </button>
+              </div>
+              {aiError && <p className="text-sm text-band-weak">{aiError}</p>}
+
+              {!insights ? (
+                <p className="text-xs text-neutral-500">
+                  자막 내용과 조회수·평균시청·스킵률 등 지표를 함께 분석해 원인을 찾아드려요.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  <p className="rounded-card bg-surface-muted/60 p-3 text-sm leading-relaxed text-neutral-700">
+                    {insights.summary}
+                  </p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <AiColumn
+                      title="잘된 점"
+                      items={insights.strengths}
+                      icon={<ThumbsUp size={15} className="text-band-strong" />}
+                      tone="border-band-strong-border bg-band-strong-soft"
+                    />
+                    <AiColumn
+                      title="아쉬운 점"
+                      items={insights.weaknesses}
+                      icon={<AlertTriangle size={15} className="text-band-weak" />}
+                      tone="border-band-weak-border bg-band-weak-soft"
+                    />
+                  </div>
+                  {insights.generatedAt && (
+                    <p className="text-[11px] text-neutral-400">
+                      {new Date(insights.generatedAt).toLocaleString("ko-KR")} 생성
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </>
         )}
       </CardBody>
     </Card>
+  );
+}
+
+interface AiColumnProps {
+  title: string;
+  items: TranscriptInsights["strengths"];
+  icon: React.ReactNode;
+  tone: string;
+}
+
+function AiColumn({ title, items, icon, tone }: AiColumnProps) {
+  const isEmpty = items.length === 0;
+  const boxTone = isEmpty ? "border-neutral-200 bg-neutral-50" : tone;
+  return (
+    <div className={`rounded-card border p-4 ${boxTone}`}>
+      <h3 className={`mb-2 flex items-center gap-1.5 text-sm font-semibold ${isEmpty ? "text-neutral-400" : ""}`}>
+        {icon}
+        {title}
+      </h3>
+      {isEmpty ? (
+        <p className="text-sm text-neutral-400">해당 항목이 없어요.</p>
+      ) : (
+        <ul className="space-y-2.5">
+          {items.map((it, i) => (
+            <li key={i}>
+              <p className="text-sm font-medium text-neutral-800">{it.title}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-neutral-600">{it.detail}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

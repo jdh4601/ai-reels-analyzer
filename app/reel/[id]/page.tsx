@@ -181,7 +181,7 @@ function ReelDetail({ reel, analysis, metricHistory, kpiDeltas, nav, onChange }:
       <div id="retention-chart" className="scroll-mt-4">
         <RetentionChart curve={reel.retentionCurve ?? []} drops={analysis.drops} />
       </div>
-      <SrtUploadCard reelId={reel.id} analysis={analysis.transcript} onChange={onChange} />
+      <SrtUploadCard reelId={reel.id} analysis={analysis.transcript} insights={reel.transcriptInsights} onChange={onChange} />
       {/* 보조 카드 — 넓은 화면에서 2열로 우측 여백 활용 */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <AudienceBreakdownCard breakdown={reel.audienceBreakdown} />

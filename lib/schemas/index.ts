@@ -7,6 +7,22 @@ export const TranscriptLineSchema = z.object({
 });
 export type TranscriptLine = z.infer<typeof TranscriptLineSchema>;
 
+// LLM 자막 심층 분석 결과 (버튼 호출 → 릴스에 캐시)
+export const TranscriptInsightItemSchema = z.object({
+  title: z.string(),
+  detail: z.string(),
+  metric: z.string().optional(), // 연결된 지표 키(예: skipRate, shareRate)
+});
+export type TranscriptInsightItem = z.infer<typeof TranscriptInsightItemSchema>;
+
+export const TranscriptInsightsSchema = z.object({
+  summary: z.string(),
+  strengths: z.array(TranscriptInsightItemSchema),
+  weaknesses: z.array(TranscriptInsightItemSchema),
+  generatedAt: z.string().optional(), // 캐시 시점 (서버에서 주입)
+});
+export type TranscriptInsights = z.infer<typeof TranscriptInsightsSchema>;
+
 export const RetentionPointSchema = z.object({
   sec: z.number().nonnegative(),
   pct: z.number().min(0).max(100),
@@ -70,6 +86,7 @@ export const ReelSchema = z.object({
   thumbnailUrl: z.string().optional(), // Graph API 썸네일
   permalink: z.string().optional(), // 인스타 원본 링크
   transcript: z.array(TranscriptLineSchema).optional(),
+  transcriptInsights: TranscriptInsightsSchema.optional(),
   derived: DerivedRatesSchema.optional(),
   audienceBreakdown: AudienceBreakdownSchema.optional(),
   watchTimeBuckets: z.array(WatchTimeBucketSchema).optional(),
