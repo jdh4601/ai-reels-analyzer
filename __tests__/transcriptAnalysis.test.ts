@@ -108,6 +108,18 @@ describe("analyzeTranscript", () => {
     expect(a.insights.some((i) => i.kind === "weakness" && i.title.includes("후반"))).toBe(true);
   });
 
+  test("영상 길이 미상(durationSec 0)이면 커버리지는 null이고 후반부 약점을 내지 않는다", () => {
+    const r = reel({
+      id: "j",
+      durationSec: 0,
+      avgWatchTimeSec: 7,
+      transcript: [line(0, 5, "시작"), line(65, 70, "끝")],
+    });
+    const a = analyzeTranscript(r, []);
+    expect(a.coveragePct).toBeNull();
+    expect(a.insights.some((i) => i.title.includes("후반"))).toBe(false);
+  });
+
   test("자막이 비어 있으면 lineCount 0, insights 빈 배열", () => {
     const a = analyzeTranscript(reel({ id: "i", transcript: [] }), []);
     expect(a.lineCount).toBe(0);

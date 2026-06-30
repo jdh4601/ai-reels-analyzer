@@ -126,7 +126,9 @@ export function SrtUploadCard({ reelId, analysis, onChange }: Props) {
         ) : (
           <>
             <p className="text-xs text-neutral-500">
-              자막 {analysis.lineCount}줄 · 영상의 {Math.round(analysis.coveragePct)}%를 덮습니다.
+              {analysis.coveragePct === null
+                ? `자막 ${analysis.lineCount}줄 · 약 ${Math.round(analysis.lastLineSec)}초 분량 (영상 길이 미상 — 동기화 시 보완됩니다)`
+                : `자막 ${analysis.lineCount}줄 · 영상의 ${Math.round(analysis.coveragePct)}%를 덮습니다.`}
             </p>
             {error && <p className="text-sm text-band-weak">{error}</p>}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

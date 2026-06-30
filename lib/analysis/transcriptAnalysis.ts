@@ -11,9 +11,10 @@ export interface TranscriptInsight {
 
 export interface TranscriptAnalysis {
   lineCount: number;
-  coveragePct: number;   // 자막이 영상 길이를 덮는 비율 (0~100)
-  hasHookLine: boolean;  // 0~3초 안에 시작하는 자막 존재 여부
-  hasCta: boolean;       // 행동 유도(팔로우/저장/공유 등) 자막 존재 여부
+  coveragePct: number | null; // 자막이 영상 길이를 덮는 비율(%). 영상 길이 미상이면 null
+  lastLineSec: number;        // 마지막 자막이 끝나는 시점(초) — 길이 미상일 때 분량 표시용
+  hasHookLine: boolean;       // 0~3초 안에 시작하는 자막 존재 여부
+  hasCta: boolean;            // 행동 유도(팔로우/저장/공유 등) 자막 존재 여부
   insights: TranscriptInsight[];
 }
 
@@ -115,12 +116,14 @@ function analyzeDrops(drops: DropSegment[], out: TranscriptInsight[]): void {
 }
 
 function analyzeCoverage(
-  coveragePct: number,
+  coveragePct: number | null,
   lastEndSec: number,
   reel: Reel,
   derived: ReturnType<typeof computeDerivedRates>,
   out: TranscriptInsight[],
 ): void {
+  // 영상 길이 미상(durationSec 0)이면 커버리지·완주율을 신뢰할 수 없으므로 판단 보류
+  if (coveragePct === null) return;
   if (coveragePct >= 70) return;
   if (derived.completionRate >= BENCHMARKS.completionRate.weakBelow) return;
 
@@ -135,13 +138,14 @@ export function analyzeTranscript(reel: Reel, drops: DropSegment[]): TranscriptA
   const transcript = reel.transcript ?? [];
 
   if (transcript.length === 0) {
-    return { lineCount: 0, coveragePct: 0, hasHookLine: false, hasCta: false, insights: [] };
+    return { lineCount: 0, coveragePct: null, lastLineSec: 0, hasHookLine: false, hasCta: false, insights: [] };
   }
 
   const derived = reel.derived ?? computeDerivedRates(reel);
   const lastEndSec = Math.max(...transcript.map((l) => l.endSec));
+  // 영상 길이를 알 때만 커버리지 계산. durationSec 0(길이 미상)이면 null로 둔다.
   const coveragePct =
-    reel.durationSec > 0 ? Math.min(100, (lastEndSec / reel.durationSec) * 100) : 0;
+    reel.durationSec > 0 ? Math.min(100, (lastEndSec / reel.durationSec) * 100) : null;
 
   const insights: TranscriptInsight[] = [];
   const hookRet = hookRetentionOf(reel);
@@ -150,5 +154,5 @@ export function analyzeTranscript(reel: Reel, drops: DropSegment[]): TranscriptA
   analyzeDrops(drops, insights);
   analyzeCoverage(coveragePct, lastEndSec, reel, derived, insights);
 
-  return { lineCount: transcript.length, coveragePct, hasHookLine, hasCta, insights };
+  return { lineCount: transcript.length, coveragePct, lastLineSec: lastEndSec, hasHookLine, hasCta, insights };
 }
